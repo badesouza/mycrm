@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE `customer` MODIFY `createdAt` DATETIME(6) NOT NULL DEFAULT (NOW() + INTERVAL 3 HOUR);
+
+-- AlterTable
+ALTER TABLE `payment` MODIFY `createdAt` DATETIME(6) NOT NULL DEFAULT (NOW() + INTERVAL 3 HOUR);
+
+-- AlterTable
+ALTER TABLE `user` MODIFY `createdAt` DATETIME(6) NOT NULL DEFAULT (NOW() + INTERVAL 3 HOUR);

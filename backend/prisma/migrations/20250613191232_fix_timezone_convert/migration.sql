@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE `customer` MODIFY `createdAt` DATETIME(6) NOT NULL DEFAULT CONVERT_TZ(NOW(), '+00:00', '-03:00');
+
+-- AlterTable
+ALTER TABLE `payment` MODIFY `createdAt` DATETIME(6) NOT NULL DEFAULT CONVERT_TZ(NOW(), '+00:00', '-03:00');
+
+-- AlterTable
+ALTER TABLE `user` MODIFY `createdAt` DATETIME(6) NOT NULL DEFAULT CONVERT_TZ(NOW(), '+00:00', '-03:00');
