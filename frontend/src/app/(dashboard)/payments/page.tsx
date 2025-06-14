@@ -81,8 +81,8 @@ export default function PaymentsPage() {
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to fetch payments',
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Falha ao buscar pagamentos',
         variant: 'destructive',
       });
     } finally {
@@ -92,13 +92,13 @@ export default function PaymentsPage() {
 
   const handleDelete = async (id: string) => {
     const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
+      title: 'Tem certeza?',
+      text: "Você não poderá reverter esta ação!",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
+      confirmButtonText: 'Sim, excluir!',
       background: '#1f2937',
       color: '#fff',
     });
@@ -124,8 +124,8 @@ export default function PaymentsPage() {
         }
 
         await Swal.fire({
-          title: 'Deleted!',
-          text: 'Payment has been deleted.',
+          title: 'Excluído!',
+          text: 'Pagamento foi excluído com sucesso.',
           icon: 'success',
           showConfirmButton: false,
           timer: 1500,
@@ -138,8 +138,8 @@ export default function PaymentsPage() {
       } catch (error) {
         console.error('Error deleting payment:', error);
         Swal.fire({
-          title: 'Error!',
-          text: error instanceof Error ? error.message : 'Failed to delete payment',
+          title: 'Erro!',
+          text: error instanceof Error ? error.message : 'Falha ao excluir pagamento',
           icon: 'error',
           background: '#1f2937',
           color: '#fff',
@@ -153,8 +153,8 @@ export default function PaymentsPage() {
     if (!id) {
       console.error('No payment ID provided for edit');
       toast({
-        title: 'Error',
-        description: 'Invalid payment ID',
+        title: 'Erro',
+        description: 'ID de pagamento inválido',
         variant: 'destructive',
       });
       return;
@@ -210,7 +210,7 @@ export default function PaymentsPage() {
       <div className="flex-1 p-8 ml-64">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-            <h1 className="text-2xl font-bold text-white">Payments</h1>
+            <h1 className="text-2xl font-bold text-white">Pagamentos</h1>
             <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-center">
               <input
                 type="text"
@@ -224,7 +224,7 @@ export default function PaymentsPage() {
                 onClick={() => router.push('/payments/register')}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                Add New Payment
+                Novo Pagamento
               </Button>
             </div>
           </div>
@@ -238,30 +238,33 @@ export default function PaymentsPage() {
                   <thead className="bg-gray-700">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Customer
+                        Cliente
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Amount
+                        Valor
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Payment Date
+                        Data
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Method
+                        Método
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Status
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Usuário
+                      </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Actions
+                        Ações
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-gray-800 divide-y divide-gray-700">
                     {payments.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-4 text-center text-gray-400">
-                          No payments found
+                        <td colSpan={7} className="px-6 py-4 text-center text-gray-400">
+                          Nenhum pagamento encontrado
                         </td>
                       </tr>
                     ) : (
@@ -269,22 +272,25 @@ export default function PaymentsPage() {
                         console.log('Rendering payment:', payment); // Debug log
                         return (
                           <tr key={payment.id} className="hover:bg-gray-700">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                               {payment.customerName}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                              {formatCurrency(payment.amount)}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                              R$ {payment.amount.toFixed(2)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                               {formatDate(payment.paymentDate)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                               {getPaymentMethodLabel(payment.paymentMethod)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(payment.status)}`}>
                                 {payment.status}
                               </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                              {payment.userName}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <Button
@@ -303,13 +309,13 @@ export default function PaymentsPage() {
                                 }}
                                 className="text-blue-400 hover:text-blue-300 mr-4"
                               >
-                                Edit
+                                Editar
                               </Button>
                               <Button
                                 onClick={() => handleDelete(payment.id)}
                                 className="text-red-400 hover:text-red-300"
                               >
-                                Delete
+                                Excluir
                               </Button>
                             </td>
                           </tr>
@@ -323,9 +329,9 @@ export default function PaymentsPage() {
               <div className="flex justify-between items-center mt-4">
                 <div className="text-gray-300">
                   {payments.length > 0 ? (
-                    <>Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, totalItems)} of {totalItems} payments</>
+                    <>Mostrando {((page - 1) * pageSize) + 1} até {Math.min(page * pageSize, totalItems)} de {totalItems} pagamentos</>
                   ) : (
-                    <>No payments found</>
+                    <>Nenhum pagamento encontrado</>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -334,14 +340,14 @@ export default function PaymentsPage() {
                     disabled={page === 1}
                     className="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Previous
+                    Anterior
                   </Button>
                   <Button
                     onClick={() => setPage(p => p + 1)}
                     disabled={page >= totalPages}
                     className="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Next
+                    Próximo
                   </Button>
                 </div>
               </div>

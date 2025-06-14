@@ -30,8 +30,8 @@ export default function RegisterUserPage() {
 
     if (formData.password !== formData.confirmPassword) {
       Swal.fire({
-        title: 'Error!',
-        text: 'Passwords do not match',
+        title: 'Erro!',
+        text: 'As senhas não coincidem',
         icon: 'error',
         background: '#1f2937',
         color: '#fff',
@@ -54,14 +54,28 @@ export default function RegisterUserPage() {
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create user');
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          Swal.fire({
+            title: 'Sessão Expirada',
+            text: 'Por favor, faça login novamente para continuar',
+            icon: 'error',
+            background: '#1f2937',
+            color: '#fff',
+          });
+          router.push('/login');
+          return;
+        }
+        throw new Error(data.message || 'Falha ao criar usuário');
       }
 
       await Swal.fire({
-        title: 'Success!',
-        text: 'User has been created.',
+        title: 'Sucesso!',
+        text: 'Usuário foi criado com sucesso.',
         icon: 'success',
         background: '#1f2937',
         color: '#fff',
@@ -78,15 +92,15 @@ export default function RegisterUserPage() {
         confirmPassword: ''
       });
 
-      // Redirect after success
-      setTimeout(() => {
-        router.push('/users');
-      }, 1500);
+      // Focus on name input for next entry
+      if (nameInputRef.current) {
+        nameInputRef.current.focus();
+      }
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error('Erro ao criar usuário:', error);
       Swal.fire({
-        title: 'Error!',
-        text: error instanceof Error ? error.message : 'Failed to create user',
+        title: 'Erro!',
+        text: error instanceof Error ? error.message : 'Falha ao criar usuário',
         icon: 'error',
         background: '#1f2937',
         color: '#fff',
@@ -108,13 +122,13 @@ export default function RegisterUserPage() {
     <div className="flex-1 p-8 ml-64">
       <div className="bg-gray-800 rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-white">Register New User</h1>
+          <h1 className="text-2xl font-bold text-white">Cadastrar Novo Usuário</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-              Name
+              Nome
             </label>
             <Input
               ref={nameInputRef}
@@ -130,7 +144,7 @@ export default function RegisterUserPage() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-              Email
+              E-mail
             </label>
             <Input
               type="email"
@@ -145,7 +159,7 @@ export default function RegisterUserPage() {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-              Password
+              Senha
             </label>
             <Input
               type="password"
@@ -160,7 +174,7 @@ export default function RegisterUserPage() {
 
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-              Confirm Password
+              Confirmar Senha
             </label>
             <Input
               type="password"
@@ -179,14 +193,14 @@ export default function RegisterUserPage() {
               onClick={() => router.push('/users')}
               className="bg-gray-600 hover:bg-gray-700"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               type="submit"
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {loading ? 'Creating...' : 'Create User'}
+              {loading ? 'Criando...' : 'Criar Usuário'}
             </Button>
           </div>
         </form>

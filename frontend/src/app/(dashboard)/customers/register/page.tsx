@@ -169,8 +169,8 @@ export default function RegisterCustomerPage() {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           Swal.fire({
-            title: 'Session Expired',
-            text: 'Please log in again to continue',
+            title: 'Sessão Expirada',
+            text: 'Por favor, faça login novamente para continuar',
             icon: 'error',
             background: '#1f2937',
             color: '#fff',
@@ -178,12 +178,12 @@ export default function RegisterCustomerPage() {
           router.push('/login');
           return;
         }
-        throw new Error(responseData.message || 'Failed to create customer');
+        throw new Error(responseData.message || 'Falha ao criar cliente');
       }
 
       await Swal.fire({
-        title: 'Success!',
-        text: 'Customer has been created.',
+        title: 'Sucesso!',
+        text: 'Cliente foi criado com sucesso.',
         icon: 'success',
         background: '#1f2937',
         color: '#fff',
@@ -211,10 +211,10 @@ export default function RegisterCustomerPage() {
         router.push('/customers');
       }, 1500);
     } catch (error) {
-      console.error('Error creating customer:', error);
+      console.error('Erro ao criar cliente:', error);
       Swal.fire({
-        title: 'Error!',
-        text: error instanceof Error ? error.message : 'Failed to create customer',
+        title: 'Erro!',
+        text: error instanceof Error ? error.message : 'Falha ao criar cliente',
         icon: 'error',
         background: '#1f2937',
         color: '#fff',
@@ -229,7 +229,7 @@ export default function RegisterCustomerPage() {
       <div className="flex-1 p-8 ml-64">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-white">Register New Customer</h1>
+            <h1 className="text-2xl font-bold text-white">Cadastrar Novo Cliente</h1>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -243,7 +243,7 @@ export default function RegisterCustomerPage() {
                     {imagePreview ? (
                       <Image
                         src={imagePreview}
-                        alt="Logo preview"
+                        alt="Visualização do logo"
                         fill
                         className="object-cover"
                         unoptimized
@@ -256,20 +256,21 @@ export default function RegisterCustomerPage() {
                       </div>
                     )}
                   </div>
+                  
                   <div>
                     <input
                       type="file"
-                      ref={fileInputRef}
-                      onChange={handleImageChange}
                       accept="image/*"
+                      onChange={handleImageChange}
                       className="hidden"
+                      ref={fileInputRef}
                     />
                     <Button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-gray-600 hover:bg-gray-700"
                     >
-                      Upload Logo
+                      Escolher Logo
                     </Button>
                   </div>
                 </div>
@@ -277,7 +278,7 @@ export default function RegisterCustomerPage() {
 
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                  Name
+                  Nome
                 </label>
                 <Input
                   ref={nameInputRef}
@@ -287,13 +288,14 @@ export default function RegisterCustomerPage() {
                   value={formData.name}
                   onChange={handleChange}
                   required
+                  placeholder="Digite o nome do cliente"
                   className="w-full bg-gray-700 text-white border-gray-600"
                 />
               </div>
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Email
+                  E-mail
                 </label>
                 <Input
                   type="email"
@@ -302,13 +304,14 @@ export default function RegisterCustomerPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  placeholder="Digite o e-mail do cliente"
                   className="w-full bg-gray-700 text-white border-gray-600"
                 />
               </div>
 
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
-                  Phone
+                  Telefone
                 </label>
                 <Input
                   type="tel"
@@ -325,7 +328,7 @@ export default function RegisterCustomerPage() {
 
               <div>
                 <label htmlFor="district" className="block text-sm font-medium text-gray-300 mb-2">
-                  District
+                  Bairro
                 </label>
                 <Input
                   type="text"
@@ -334,13 +337,14 @@ export default function RegisterCustomerPage() {
                   value={formData.district}
                   onChange={handleChange}
                   required
+                  placeholder="Digite o bairro"
                   className="w-full bg-gray-700 text-white border-gray-600"
                 />
               </div>
 
               <div>
                 <label htmlFor="manager" className="block text-sm font-medium text-gray-300 mb-2">
-                  Manager
+                  Gerente
                 </label>
                 <Input
                   type="text"
@@ -349,13 +353,14 @@ export default function RegisterCustomerPage() {
                   value={formData.manager}
                   onChange={handleChange}
                   required
+                  placeholder="Digite o nome do gerente"
                   className="w-full bg-gray-700 text-white border-gray-600"
                 />
               </div>
 
               <div>
                 <label htmlFor="due_date" className="block text-sm font-medium text-gray-300 mb-2">
-                  Due Date
+                  Data de Vencimento
                 </label>
                 <Input
                   type="date"
@@ -370,7 +375,7 @@ export default function RegisterCustomerPage() {
 
               <div>
                 <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount
+                  Valor
                 </label>
                 <Input
                   type="number"
@@ -381,13 +386,14 @@ export default function RegisterCustomerPage() {
                   required
                   step="0.01"
                   min="0"
+                  placeholder="Digite o valor"
                   className="w-full bg-gray-700 text-white border-gray-600"
                 />
               </div>
 
               <div>
                 <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-300 mb-2">
-                  Payment Method
+                  Método de Pagamento
                 </label>
                 <select
                   id="paymentMethod"
@@ -397,9 +403,9 @@ export default function RegisterCustomerPage() {
                   required
                   className="w-full bg-gray-700 text-white border-gray-600 rounded-md px-3 py-2"
                 >
-                  <option value="credit_card">Credit Card</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="cash">Cash</option>
+                  <option value="credit_card">Cartão de Crédito</option>
+                  <option value="bank_transfer">Transferência Bancária</option>
+                  <option value="cash">Dinheiro</option>
                 </select>
               </div>
             </div>
@@ -410,14 +416,14 @@ export default function RegisterCustomerPage() {
                 onClick={() => router.push('/customers')}
                 className="bg-gray-600 hover:bg-gray-700"
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={loading}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {loading ? 'Creating...' : 'Create Customer'}
+                {loading ? 'Criando...' : 'Criar Cliente'}
               </Button>
             </div>
           </form>

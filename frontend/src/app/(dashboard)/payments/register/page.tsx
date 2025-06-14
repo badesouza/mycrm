@@ -128,16 +128,29 @@ export default function RegisterPaymentPage() {
       console.log('Response status:', response.status);
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
-      const data = await response.json();
-      console.log('Response data:', data);
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create payment');
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          Swal.fire({
+            title: 'Sessão Expirada',
+            text: 'Por favor, faça login novamente para continuar',
+            icon: 'error',
+            background: '#1f2937',
+            color: '#fff',
+          });
+          router.push('/login');
+          return;
+        }
+        throw new Error(responseData.message || 'Falha ao criar pagamento');
       }
 
       await Swal.fire({
-        title: 'Success!',
-        text: 'Payment has been created.',
+        title: 'Sucesso!',
+        text: 'Pagamento foi criado com sucesso.',
         icon: 'success',
         background: '#1f2937',
         color: '#fff',
@@ -160,10 +173,10 @@ export default function RegisterPaymentPage() {
         router.push('/payments');
       }, 1500);
     } catch (error) {
-      console.error('Error creating payment:', error);
+      console.error('Erro ao criar pagamento:', error);
       Swal.fire({
-        title: 'Error!',
-        text: error instanceof Error ? error.message : 'Failed to create payment',
+        title: 'Erro!',
+        text: error instanceof Error ? error.message : 'Falha ao criar pagamento',
         icon: 'error',
         background: '#1f2937',
         color: '#fff',
@@ -178,14 +191,14 @@ export default function RegisterPaymentPage() {
       <div className="flex-1 p-8 ml-64">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-white">Register New Payment</h1>
+            <h1 className="text-2xl font-bold text-white">Registrar Novo Pagamento</h1>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="customerId" className="block text-sm font-medium text-gray-300 mb-2">
-                  Customer
+                  Cliente
                 </label>
                 <select
                   id="customerId"
@@ -195,8 +208,8 @@ export default function RegisterPaymentPage() {
                   required
                   className="w-full bg-gray-700 text-white border-gray-600 rounded-md px-3 py-2"
                 >
-                  <option value="">Select a customer</option>
-                  {customers.map(customer => (
+                  <option value="">Selecione um cliente</option>
+                  {customers.map((customer) => (
                     <option key={customer.id} value={customer.id}>
                       {customer.name}
                     </option>
@@ -206,7 +219,7 @@ export default function RegisterPaymentPage() {
 
               <div>
                 <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount
+                  Valor
                 </label>
                 <Input
                   type="number"
@@ -223,7 +236,7 @@ export default function RegisterPaymentPage() {
 
               <div>
                 <label htmlFor="due_date" className="block text-sm font-medium text-gray-300 mb-2">
-                  Due Date
+                  Data de Vencimento
                 </label>
                 <Input
                   type="date"
@@ -266,9 +279,9 @@ export default function RegisterPaymentPage() {
                   required
                   className="w-full bg-gray-700 text-white border-gray-600 rounded-md px-3 py-2"
                 >
-                  <option value="unpaid">Unpaid</option>
-                  <option value="paid">Paid</option>
-                  <option value="pending">Pending</option>
+                  <option value="unpaid">Não Pago</option>
+                  <option value="paid">Pago</option>
+                  <option value="pending">Pendente</option>
                 </select>
               </div>
             </div>
@@ -279,14 +292,14 @@ export default function RegisterPaymentPage() {
                 onClick={() => router.push('/payments')}
                 className="bg-gray-600 hover:bg-gray-700"
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={loading}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {loading ? 'Creating...' : 'Create Payment'}
+                {loading ? 'Criando...' : 'Criar Pagamento'}
               </Button>
             </div>
           </form>

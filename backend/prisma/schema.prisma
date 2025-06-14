@@ -11,13 +11,16 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  email     String   @unique
+  email     String    @unique
   password  String
-  status    String   @default("active")
-  createdAt DateTime @default(now()) @db.DateTime(6)
-  updatedAt DateTime @updatedAt @db.DateTime(6)
+  status    String    @default("active")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  payments  Payment[]
+
+  @@map("users")
 }
 
 model Customer {
@@ -25,26 +28,34 @@ model Customer {
   name          String
   email         String    @unique
   phone         String
-  imageLogo     String?
   district      String
   manager       String
-  due_date      DateTime  @db.DateTime(6)
+  due_date      DateTime
   amount        Float
-  status        String
-  paymentMethod String
-  createdAt     DateTime  @default(now()) @db.DateTime(6)
-  updatedAt     DateTime  @updatedAt @db.DateTime(6)
+  status        String    @default("active")
+  paymentMethod String    @default("credit_card")
+  imageLogo     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   payments      Payment[]
+
+  @@map("customers")
 }
 
 model Payment {
-  id         String   @id @default(uuid())
-  customer   Customer @relation(fields: [customerId], references: [id])
-  customerId String
-  userName   String
-  amount     Float
-  interest   Float
-  status     String   @default("unpaid")
-  createdAt  DateTime @default(now()) @db.DateTime(6)
-  updatedAt  DateTime @updatedAt @db.DateTime(6)
+  id            String   @id @default(uuid())
+  customerId    String
+  userId        String
+  amount        Float
+  status        String   @default("unpaid")
+  due_date      DateTime
+  userName      String
+  paymentMethod String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@map("payments")
 }

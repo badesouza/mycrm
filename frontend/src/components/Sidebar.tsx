@@ -3,28 +3,27 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Users, DollarSign, LogOut, UserCog } from 'lucide-react';
-import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 
 const menuItems = [
   {
-    title: 'Dashboard',
+    title: 'Painel',
     path: '/dashboard',
     icon: Home,
   },
   {
-    title: 'Customers',
+    title: 'Clientes',
     path: '/customers',
     icon: Users,
   },
   {
-    title: 'Payments',
+    title: 'Pagamentos',
     path: '/payments',
     icon: DollarSign,
   },
   {
-    title: 'Users',
+    title: 'Usuários',
     path: '/users',
     icon: UserCog,
   },
@@ -36,13 +35,14 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You will be logged out of your account",
+      title: 'Tem certeza?',
+      text: "Você será desconectado da sua conta",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, logout!',
+      confirmButtonText: 'Sim, sair!',
+      cancelButtonText: 'Cancelar',
       background: '#1f2937',
       color: '#fff',
     });
@@ -54,8 +54,8 @@ export default function Sidebar() {
       
       // Show success message
       await Swal.fire({
-        title: 'Logged out!',
-        text: 'You have been successfully logged out.',
+        title: 'Desconectado!',
+        text: 'Você foi desconectado com sucesso.',
         icon: 'success',
         showConfirmButton: false,
         timer: 1500,
@@ -72,7 +72,7 @@ export default function Sidebar() {
   return (
     <div className="fixed left-0 top-0 h-screen w-64 bg-gray-800 p-4">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Modern CRM</h1>
+        <h1 className="text-2xl font-bold text-white">GesFood CRM</h1>
       </div>
 
       <nav className="space-y-2">
@@ -103,7 +103,7 @@ export default function Sidebar() {
           onClick={handleLogout}
         >
           <LogOut className="h-5 w-5" />
-          <span>Exit</span>
+          <span>Sair</span>
         </button>
       </div>
     </div>

@@ -12,19 +12,21 @@ function getBrazilTime() {
 }
 
 async function main() {
-  // Create default admin user
-  const hashedPassword = await bcrypt.hash('admin123', 10);
-  const admin = await prisma.user.upsert({
+  // Create admin user
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  
+  const adminUser = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
     update: {},
     create: {
-      name: 'Admin User',
       email: 'admin@example.com',
-      password: hashedPassword,
-      status: 'active',
-      createdAt: getBrazilTime(),
+      name: 'Admin',
+      password: adminPassword,
+      status: 'active'
     },
   });
+
+  console.log('Admin user created:', adminUser);
 
   // Create sample customers
   const customer1 = await prisma.customer.upsert({
@@ -34,13 +36,12 @@ async function main() {
       name: 'Customer One',
       email: 'customer1@example.com',
       phone: '(11) 99999-9999',
-      district: 'São Paulo',
+      district: 'Downtown',
       manager: 'John Doe',
-      due_date: new Date(new Date().setHours(new Date().getHours() + 24 - 3)), // Tomorrow - 3 hours
-      amount: 1000.00,
+      due_date: new Date(),
+      amount: 500.00,
       status: 'active',
-      paymentMethod: 'credit_card',
-      createdAt: getBrazilTime(),
+      paymentMethod: 'credit_card'
     },
   });
 
@@ -50,34 +51,39 @@ async function main() {
     create: {
       name: 'Customer Two',
       email: 'customer2@example.com',
-      phone: '(11) 98888-8888',
-      district: 'Rio de Janeiro',
+      phone: '(11) 88888-8888',
+      district: 'Uptown',
       manager: 'Jane Smith',
-      due_date: new Date(new Date().setHours(new Date().getHours() + 48 - 3)), // Day after tomorrow - 3 hours
-      amount: 2000.00,
+      due_date: new Date(),
+      amount: 1000.00,
       status: 'active',
-      paymentMethod: 'bank_transfer',
-      createdAt: getBrazilTime(),
+      paymentMethod: 'bank_transfer'
     },
   });
+
+  console.log('Sample customers created:', { customer1, customer2 });
 
   // Create sample payments
   await prisma.payment.createMany({
     data: [
       {
         customerId: customer1.id,
-        userName: admin.name,
+        userId: adminUser.id,
+        userName: adminUser.name,
         amount: 500.00,
-        interest: 0.00,
         status: 'paid',
+        due_date: new Date(),
+        paymentMethod: customer1.paymentMethod,
         createdAt: getBrazilTime(),
       },
       {
         customerId: customer2.id,
-        userName: admin.name,
+        userId: adminUser.id,
+        userName: adminUser.name,
         amount: 1000.00,
-        interest: 50.00,
         status: 'unpaid',
+        due_date: new Date(),
+        paymentMethod: customer2.paymentMethod,
         createdAt: getBrazilTime(),
       },
     ],

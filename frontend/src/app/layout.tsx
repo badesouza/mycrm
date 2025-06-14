@@ -6,8 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "MyCRM",
-  description: "Customer Relationship Management System",
+  title: "GesFood CRM",
+  description: "Sistema de Gestão de Relacionamento com Clientes",
   icons: {
     icon: [
       { url: '/icon.png' },
