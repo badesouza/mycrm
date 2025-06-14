@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 export const initializeScheduler = () => {
   console.log('Initializing scheduler...');
   
-  // Test scheduler - runs every minute
-  cron.schedule('* * * * *', async () => {
+  // Run daily at 9 AM
+  cron.schedule('0 9 * * *', async () => {
     try {
       const today = new Date();
       console.log('Scheduler running at:', today.toISOString());
@@ -69,5 +69,5 @@ export const initializeScheduler = () => {
     }
   });
 
-  console.log('Scheduler initialized successfully');
+  console.log('Scheduler initialized successfully - Will run daily at 9 AM');
 }; 

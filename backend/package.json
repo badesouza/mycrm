@@ -11,7 +11,9 @@
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "test": "jest",
+    "import-excel": "ts-node src/scripts/importExcel.ts"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +30,9 @@
     "@types/mongoose": "^5.11.97",
     "@types/multer": "^1.4.13",
     "@types/node-cron": "^3.0.11",
+    "@types/pg": "^8.15.4",
+    "@types/xlsx": "^0.0.36",
+    "@wppconnect-team/wppconnect": "^1.37.2",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -39,10 +44,12 @@
     "multer": "^2.0.1",
     "mysql2": "^3.9.1",
     "node-cron": "^3.0.3",
+    "pg": "^8.16.0",
     "prisma": "^5.10.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

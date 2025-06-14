@@ -5,6 +5,7 @@ import fs from 'fs';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
 import Customer from '../models/customer';
+import { processExcelFile } from '../services/excelService';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -271,6 +272,30 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error deleting customer:', error);
     res.status(500).json({ message: 'Error deleting customer' });
+  }
+});
+
+// Upload Excel file and process customers
+router.post('/upload', authenticateToken, upload.single('file'), async (req: AuthRequest, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Nenhum arquivo enviado' });
+    }
+
+    const filePath = req.file.path;
+    const result = await processExcelFile(filePath);
+
+    res.json({
+      message: `Processamento concluído. ${result.success} clientes importados com sucesso.`,
+      success: result.success,
+      errors: result.errors
+    });
+  } catch (error) {
+    console.error('Error processing Excel file:', error);
+    res.status(500).json({
+      message: 'Erro ao processar arquivo Excel',
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
   }
 });
 

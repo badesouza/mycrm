@@ -8,6 +8,8 @@ import userRoutes from './routes/userRoutes';
 import customerRoutes from './routes/customers';
 import uploadRoutes from './routes/upload';
 import paymentsRouter from './routes/payments';
+import dashboardRoutes from './routes/dashboard';
+import whatsappRoutes from './routes/whatsapp';
 import { initializeScheduler } from './services/scheduler';
 
 const app = express();
@@ -32,12 +34,23 @@ app.use((req, res, next) => {
   next();
 });
 
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  console.log('Test endpoint hit');
+  res.json({ 
+    message: 'Test endpoint is working',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payments', paymentsRouter);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Initialize scheduler
 initializeScheduler();
