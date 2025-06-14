@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
-import Cookies from 'js-cookie';
 import Swal from 'sweetalert2';
 import Image from 'next/image';
 import ClientWrapper from '@/components/ClientWrapper';
@@ -109,9 +108,20 @@ export default function RegisterCustomerPage() {
     setLoading(true);
 
     try {
-      const token = Cookies.get('token');
+      const token = localStorage.getItem('token');
+      console.log('Token exists:', !!token); // Debug log
+      console.log('Token value:', token ? token.substring(0, 10) + '...' : 'No token'); // Debug log
+      
       if (!token) {
-        throw new Error('No authentication token found');
+        Swal.fire({
+          title: 'Authentication Error',
+          text: 'Please log in again to continue',
+          icon: 'error',
+          background: '#1f2937',
+          color: '#fff',
+        });
+        router.push('/login');
+        return;
       }
 
       // Create FormData for multipart/form-data
@@ -134,6 +144,14 @@ export default function RegisterCustomerPage() {
         }
       });
 
+      // Log the request details
+      console.log('Request URL:', 'http://localhost:3001/api/customers');
+      console.log('Request method:', 'POST');
+      console.log('Request headers:', {
+        'Authorization': `Bearer ${token}`
+      });
+      console.log('Form data:', Object.fromEntries(submitData.entries()));
+
       const response = await fetch('http://localhost:3001/api/customers', {
         method: 'POST',
         headers: {
@@ -142,9 +160,25 @@ export default function RegisterCustomerPage() {
         body: submitData
       });
 
+      const responseData = await response.json();
+      console.log('Server response:', responseData); // Debug log
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create customer');
+        if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Please log in again to continue',
+            icon: 'error',
+            background: '#1f2937',
+            color: '#fff',
+          });
+          router.push('/login');
+          return;
+        }
+        throw new Error(responseData.message || 'Failed to create customer');
       }
 
       await Swal.fire({

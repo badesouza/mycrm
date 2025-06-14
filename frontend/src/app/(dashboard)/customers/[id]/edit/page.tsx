@@ -45,7 +45,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
 
   const fetchCustomer = async () => {
     try {
-      const token = Cookies.get('token');
+      const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -113,7 +113,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
 
     // Upload image
     try {
-      const token = Cookies.get('token');
+      const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -160,7 +160,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
     if (!customer) return;
 
     try {
-      const token = Cookies.get('token');
+      const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }

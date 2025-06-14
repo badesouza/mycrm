@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { useToast } from '@/components/ui/use-toast';
-import Cookies from 'js-cookie';
+import ClientWrapper from '@/components/ClientWrapper';
+import { useDebounce } from '@/lib/useDebounce';
+import { toast } from '@/components/ui/use-toast';
+import Swal from 'sweetalert2';
 
 interface Payment {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   customerName: string;
   amount: number;
   paymentDate: string;
@@ -18,133 +21,334 @@ interface Payment {
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const debouncedSearch = useDebounce(search, 400);
+  const router = useRouter();
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [debouncedSearch, page, pageSize]);
 
   const fetchPayments = async () => {
     try {
-      const token = Cookies.get('token');
-      const response = await fetch('http://localhost:3001/api/payments', {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      console.log('Token from localStorage:', token ? token.substring(0, 10) + '...' : 'No token found');
+
+      if (!token) {
+        console.error('No authentication token found');
+        throw new Error('No authentication token found');
+      }
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: pageSize.toString(),
+        search: debouncedSearch,
+      });
+
+      console.log('Fetching payments with params:', params.toString());
+      const response = await fetch(`http://localhost:3001/api/payments?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
 
+      console.log('Payments response status:', response.status);
       if (!response.ok) {
-        throw new Error('Failed to fetch payments');
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        throw new Error(errorData.message || 'Failed to fetch payments');
       }
 
       const data = await response.json();
-      setPayments(data);
+      console.log('Payments data:', {
+        total: data.total,
+        page: data.page,
+        pageSize: data.pageSize,
+        paymentsCount: data.data.length,
+        firstPayment: data.data[0]
+      });
+
+      setPayments(data.data);
+      setTotalPages(Math.ceil(data.total / data.pageSize));
+      setTotalItems(data.total);
     } catch (error) {
+      console.error('Error fetching payments:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to fetch payments',
         variant: 'destructive',
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
+  const handleDelete = async (id: string) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+      background: '#1f2937',
+      color: '#fff',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await fetch(`http://localhost:3001/api/payments/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to delete payment');
+        }
+
+        await Swal.fire({
+          title: 'Deleted!',
+          text: 'Payment has been deleted.',
+          icon: 'success',
+          showConfirmButton: false,
+          timer: 1500,
+          timerProgressBar: true,
+          background: '#1f2937',
+          color: '#fff',
+        });
+
+        fetchPayments();
+      } catch (error) {
+        console.error('Error deleting payment:', error);
+        Swal.fire({
+          title: 'Error!',
+          text: error instanceof Error ? error.message : 'Failed to delete payment',
+          icon: 'error',
+          background: '#1f2937',
+          color: '#fff',
+        });
+      }
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    console.log('handleEdit called with ID:', id);
+    if (!id) {
+      console.error('No payment ID provided for edit');
+      toast({
+        title: 'Error',
+        description: 'Invalid payment ID',
+        variant: 'destructive',
+      });
+      return;
+    }
+    console.log('Navigating to edit page for payment ID:', id);
+    router.push(`/payments/${id}/edit`);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(amount);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return 'bg-green-100 text-green-800';
+      case 'unpaid':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    switch (method) {
+      case 'credit_card':
+        return 'Credit Card';
+      case 'bank_transfer':
+        return 'Bank Transfer';
+      case 'cash':
+        return 'Cash';
+      default:
+        return method;
+    }
+  };
 
   return (
-    <div className="flex-1 p-8 ml-64">
-      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-white">Payments</h1>
-          <Button
-            onClick={() => {/* TODO: Implement new payment modal */}}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            Add New Payment
-          </Button>
-        </div>
+    <ClientWrapper>
+      <div className="flex-1 p-8 ml-64">
+        <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+            <h1 className="text-2xl font-bold text-white">Payments</h1>
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-center">
+              <input
+                type="text"
+                placeholder="Search payments..."
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+                className="rounded-md px-3 py-2 bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ minWidth: 220 }}
+              />
+              <Button
+                onClick={() => router.push('/payments/register')}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Add New Payment
+              </Button>
+            </div>
+          </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-700">
-            <thead className="bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Payment Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Method
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Recorded By
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-gray-800 divide-y divide-gray-700">
-              {payments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-gray-700">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    {payment.customerName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    ${payment.amount.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {new Date(payment.paymentDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {payment.paymentMethod}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${payment.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                        payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                        'bg-red-100 text-red-800'}`}>
-                      {payment.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {payment.userName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Button
-                      onClick={() => {/* TODO: Implement edit payment */}}
-                      className="text-blue-400 hover:text-blue-300 mr-4"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      onClick={() => {/* TODO: Implement delete payment */}}
-                      className="text-red-400 hover:text-red-300"
-                    >
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {loading ? (
+            <div className="flex items-center justify-center h-40 text-white">Loading...</div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-700">
+                  <thead className="bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Customer
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Payment Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Method
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-gray-800 divide-y divide-gray-700">
+                    {payments.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-4 text-center text-gray-400">
+                          No payments found
+                        </td>
+                      </tr>
+                    ) : (
+                      payments.map((payment) => {
+                        console.log('Rendering payment:', payment); // Debug log
+                        return (
+                          <tr key={payment.id} className="hover:bg-gray-700">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                              {payment.customerName}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                              {formatCurrency(payment.amount)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                              {formatDate(payment.paymentDate)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                              {getPaymentMethodLabel(payment.paymentMethod)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(payment.status)}`}>
+                                {payment.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <Button
+                                onClick={() => {
+                                  console.log('Edit button clicked for payment:', payment);
+                                  if (!payment.id) {
+                                    console.error('Payment has no ID:', payment);
+                                    toast({
+                                      title: 'Error',
+                                      description: 'Invalid payment data',
+                                      variant: 'destructive',
+                                    });
+                                    return;
+                                  }
+                                  handleEdit(payment.id);
+                                }}
+                                className="text-blue-400 hover:text-blue-300 mr-4"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                onClick={() => handleDelete(payment.id)}
+                                className="text-red-400 hover:text-red-300"
+                              >
+                                Delete
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-gray-300">
+                  {payments.length > 0 ? (
+                    <>Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, totalItems)} of {totalItems} payments</>
+                  ) : (
+                    <>No payments found</>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={page >= totalPages}
+                    className="bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
-    </div>
+    </ClientWrapper>
   );
 } 

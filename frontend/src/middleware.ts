@@ -2,19 +2,15 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('token')?.value
+  // Get token from localStorage (this won't work in middleware, we need to handle auth differently)
   const { pathname } = request.nextUrl
 
   // If trying to access login page while authenticated, redirect to home
-  if (pathname === '/login' && token) {
-    return NextResponse.redirect(new URL('/', request.url))
+  if (pathname === '/login') {
+    return NextResponse.next()
   }
 
-  // If not authenticated and trying to access any page other than login, redirect to login
-  if (!token && pathname !== '/login') {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
+  // For all other routes, let the client-side handle authentication
   return NextResponse.next()
 }
 

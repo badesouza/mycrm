@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import Cookies from 'js-cookie';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,12 +14,15 @@ export default function LoginPage() {
     email: '',
     password: '',
   });
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
+      console.log('Attempting login for:', formData.email);
       const response = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: {
@@ -29,29 +31,40 @@ export default function LoginPage() {
         body: JSON.stringify(formData),
       });
 
+      console.log('Login response status:', response.status);
       const data = await response.json();
+      console.log('Login response data:', { 
+        hasToken: !!data.token,
+        user: data.user
+      });
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Store token in cookie
-      Cookies.set('token', data.token, { expires: 1 }); // Expires in 1 day
-      Cookies.set('user', JSON.stringify(data.user), { expires: 1 });
+      if (!data.token) {
+        console.error('No token in response:', data);
+        throw new Error('No authentication token received');
+      }
+
+      // Store token in localStorage
+      localStorage.setItem('token', data.token);
+      console.log('Token stored in localStorage');
+
+      // Store user data
+      localStorage.setItem('user', JSON.stringify(data.user));
+      console.log('User data stored in localStorage');
 
       toast({
         title: 'Success',
         description: 'Login successful!',
       });
 
-      // Redirect to home page
-      router.push('/');
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Login failed',
-        variant: 'destructive',
-      });
+      // Redirect to dashboard
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }

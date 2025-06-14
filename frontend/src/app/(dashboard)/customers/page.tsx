@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import Cookies from 'js-cookie';
 import Swal from 'sweetalert2';
 import ClientWrapper from '@/components/ClientWrapper';
 import { useDebounce } from '@/lib/useDebounce';
+import { toast } from '@/components/ui/use-toast';
 
 interface Customer {
   id: string;
@@ -28,7 +28,8 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const debouncedSearch = useDebounce(search, 400);
   const router = useRouter();
 
@@ -38,36 +39,54 @@ export default function CustomersPage() {
   }, [debouncedSearch, page, pageSize]);
 
   const fetchCustomers = async () => {
-    setLoading(true);
     try {
-      const token = Cookies.get('token');
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      console.log('Token from localStorage:', token ? token.substring(0, 10) + '...' : 'No token found');
+
       if (!token) {
+        console.error('No authentication token found');
         throw new Error('No authentication token found');
       }
+
       const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: pageSize.toString(),
         search: debouncedSearch,
-        page: String(page),
-        pageSize: String(pageSize),
       });
-      const response = await fetch(`http://localhost:3001/api/customers?${params.toString()}`, {
+
+      console.log('Fetching customers with params:', params.toString());
+      const response = await fetch(`http://localhost:3001/api/customers?${params}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
+
+      console.log('Customers response status:', response.status);
       if (!response.ok) {
-        throw new Error('Failed to fetch customers');
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        throw new Error(errorData.message || 'Failed to fetch customers');
       }
-      const { data, total } = await response.json();
-      setCustomers(data);
-      setTotal(total);
+
+      const data = await response.json();
+      console.log('Customers data:', {
+        total: data.total,
+        page: data.page,
+        pageSize: data.pageSize,
+        customersCount: data.data.length
+      });
+
+      setCustomers(data.data);
+      setTotalPages(Math.ceil(data.total / data.pageSize));
+      setTotalItems(data.total);
     } catch (error) {
       console.error('Error fetching customers:', error);
-      Swal.fire({
-        title: 'Error!',
-        text: 'Failed to load customers',
-        icon: 'error',
-        background: '#1f2937',
-        color: '#fff',
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to fetch customers',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -89,7 +108,7 @@ export default function CustomersPage() {
 
     if (result.isConfirmed) {
       try {
-        const token = Cookies.get('token');
+        const token = localStorage.getItem('token');
         if (!token) {
           throw new Error('No authentication token found');
         }
@@ -126,8 +145,6 @@ export default function CustomersPage() {
       }
     }
   };
-
-  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <ClientWrapper>
@@ -250,7 +267,7 @@ export default function CustomersPage() {
               {/* Pagination Controls */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-6 gap-4">
                 <div className="text-gray-400 text-sm">
-                  Showing {customers.length ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, total)} of {total} customers
+                  Showing {customers.length ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, totalItems)} of {totalItems} customers
                 </div>
                 <div className="flex items-center gap-2">
                   <button

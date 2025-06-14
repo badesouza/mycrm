@@ -48,8 +48,9 @@ export default function Sidebar() {
     });
 
     if (result.isConfirmed) {
-      // Remove token
-      Cookies.remove('token');
+      // Remove token from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       
       // Show success message
       await Swal.fire({
