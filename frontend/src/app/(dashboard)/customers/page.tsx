@@ -10,6 +10,7 @@ import ClientWrapper from '@/components/ClientWrapper';
 import { useDebounce } from '@/lib/useDebounce';
 import { toast } from '@/components/ui/use-toast';
 import { MessageSquare } from 'lucide-react';
+import Image from 'next/image';
 
 interface Customer {
   id: string;
@@ -269,6 +270,16 @@ export default function CustomersPage() {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      timeZone: 'UTC',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   return (
     <ClientWrapper>
       <div className="flex-1 p-8 ml-64">
@@ -360,11 +371,16 @@ export default function CustomersPage() {
                         <tr key={customer.id} className="hover:bg-gray-700">
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             {customer.imageLogo ? (
-                              <img
-                                src={customer.imageLogo.startsWith('http') ? customer.imageLogo : `http://localhost:3001/uploads/${customer.imageLogo.replace(/^\/|\//, '')}`}
-                                alt={customer.name}
-                                className="w-10 h-10 rounded-full object-cover border border-gray-600 bg-gray-700"
-                              />
+                              <div className="relative w-10 h-10">
+                                <Image
+                                  src={customer.imageLogo.startsWith('http') ? customer.imageLogo : `http://localhost:3001/uploads/${customer.imageLogo.replace(/^\/|\//, '')}`}
+                                  alt={customer.name}
+                                  fill
+                                  className="rounded-full object-cover border border-gray-600 bg-gray-700"
+                                  sizes="40px"
+                                  unoptimized
+                                />
+                              </div>
                             ) : (
                               <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 border border-gray-600">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -383,7 +399,7 @@ export default function CustomersPage() {
                             <div>{customer.district}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                            <div>{new Date(customer.due_date).toLocaleDateString('pt-BR')}</div>
+                            <div>{formatDate(customer.due_date)}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                             <div>{customer.amount.toLocaleString('pt-BR', {
@@ -391,9 +407,9 @@ export default function CustomersPage() {
                               currency: 'BRL'
                             })}</div>
                             <div className="text-gray-400">
-                              {customer.paymentMethod === 'credit_card' && 'Cartão de Crédito'}
-                              {customer.paymentMethod === 'bank_transfer' && 'Transferência Bancária'}
-                              {customer.paymentMethod === 'cash' && 'Dinheiro'}
+                              {customer.paymentMethod === 'pix' && 'PIX'}
+                              {customer.paymentMethod === 'boleto' && 'Boleto'}
+                              {customer.paymentMethod === 'dinheiro' && 'Dinheiro'}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -416,7 +432,7 @@ export default function CustomersPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => router.push(`/customers/edit/${customer.id}`)}
+                                onClick={() => router.push(`/customers/${customer.id}/edit`)}
                               >
                                 Editar
                               </Button>
@@ -474,7 +490,7 @@ export default function CustomersPage() {
       </div>
 
       <Dialog open={isWhatsAppOpen} onOpenChange={setIsWhatsAppOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white">
+        <DialogContent className="sm:max-w-[600px] bg-gray-800 text-white">
           <DialogHeader>
             <DialogTitle>Enviar mensagem WhatsApp</DialogTitle>
           </DialogHeader>
@@ -487,7 +503,25 @@ export default function CustomersPage() {
                 placeholder="Digite sua mensagem..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="min-h-[100px] bg-gray-700 border-gray-600 text-white"
+                className="min-h-[300px] bg-gray-700 border-gray-600 text-white font-mono"
+                onFocus={() => {
+                  if (!message) {
+                    const dueDate = new Date(selectedCustomer?.due_date || '');
+                    const formattedDueDate = dueDate.toLocaleDateString('pt-BR', { 
+                      timeZone: 'UTC',
+                      day: '2-digit',
+                      month: '2-digit'
+                    });
+                    const formattedAmount = new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(selectedCustomer?.amount || 0);
+
+                    const defaultMessage = `Olá, ${selectedCustomer?.name}! 👋\n\n⏰ Faltam 5 dias para o vencimento da sua fatura!\n🗓️ Data de vencimento: ${formattedDueDate}\n💰 Valor: ${formattedAmount}\n\nPor favor, se já realizou o pagamento, desconsidere esta mensagem. ✅\n\nCaso contrário, contamos com sua atenção para evitar juros e manter seus serviços em dia. 😉\n\nQualquer dúvida, estamos à disposição! 📲\n\nAtenciosamente,\nEquipe Gesfood 🚀`;
+                    
+                    setMessage(defaultMessage);
+                  }
+                }}
               />
             </div>
           </div>

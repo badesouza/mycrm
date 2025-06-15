@@ -166,9 +166,10 @@ export default function PaymentsPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', {
+      timeZone: 'UTC',
       day: '2-digit',
       month: '2-digit',
-      year: '2-digit'
+      year: 'numeric'
     });
   };
 
@@ -192,14 +193,27 @@ export default function PaymentsPage() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return 'Pago';
+      case 'unpaid':
+        return 'Não Pago';
+      case 'pending':
+        return 'Pendente';
+      default:
+        return status;
+    }
+  };
+
   const getPaymentMethodLabel = (method: string) => {
     switch (method) {
-      case 'credit_card':
-        return 'Credit Card';
-      case 'bank_transfer':
-        return 'Bank Transfer';
+      case 'pix':
+        return 'PIX';
+      case 'boleto':
+        return 'Boleto';
       case 'cash':
-        return 'Cash';
+        return 'Dinheiro';
       default:
         return method;
     }
@@ -276,7 +290,7 @@ export default function PaymentsPage() {
                               {payment.customerName}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                              R$ {payment.amount.toFixed(2)}
+                              {formatCurrency(payment.amount)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                               {formatDate(payment.paymentDate)}
@@ -286,7 +300,7 @@ export default function PaymentsPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(payment.status)}`}>
-                                {payment.status}
+                                {getStatusLabel(payment.status)}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">

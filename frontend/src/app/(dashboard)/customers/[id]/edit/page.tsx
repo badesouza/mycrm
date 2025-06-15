@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import Cookies from 'js-cookie';
 import Swal from 'sweetalert2';
 import ClientWrapper from '@/components/ClientWrapper';
 import { use } from 'react';
@@ -236,7 +235,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
     <ClientWrapper>
       <div className="flex-1 p-8 ml-64">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
-          <h1 className="text-2xl font-bold text-white mb-6">Edit Customer</h1>
+          <h1 className="text-2xl font-bold text-white mb-6">Editar Cliente</h1>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
@@ -274,14 +273,14 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
                       onClick={() => fileInputRef.current?.click()}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
-                      Change Logo
+                      Escolher Logo
                     </Button>
                   </div>
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Name
+                  Nome
                 </label>
                 <input
                   type="text"
@@ -293,7 +292,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Email
+                  E-mail
                 </label>
                 <input
                   type="email"
@@ -305,7 +304,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Phone
+                Telefone
                 </label>
                 <input
                   type="tel"
@@ -317,7 +316,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  District
+                Cidade
                 </label>
                 <input
                   type="text"
@@ -329,7 +328,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Manager
+                Responsável
                 </label>
                 <input
                   type="text"
@@ -341,7 +340,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Due Date
+                Data de Vencimento
                 </label>
                 <input
                   type="date"
@@ -353,7 +352,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount
+                  Valor
                 </label>
                 <input
                   type="number"
@@ -366,7 +365,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Payment Method
+                Método de Pagamento
                 </label>
                 <select
                   value={customer.paymentMethod}
@@ -374,9 +373,9 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
                   className="w-full px-3 py-2 bg-gray-700 text-white rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
-                  <option value="credit_card">Credit Card</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="cash">Cash</option>
+                  <option value="pix">PIX</option>
+                  <option value="boleto">Boleto</option>
+                  <option value="dinheiro">Dinheiro</option>
                 </select>
               </div>
               <div>
@@ -400,13 +399,13 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
                 onClick={() => router.push('/customers')}
                 className="bg-gray-600 hover:bg-gray-700"
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                Save Changes
+                Salvar Alterações
               </Button>
             </div>
           </form>

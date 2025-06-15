@@ -22,6 +22,8 @@ export default function WhatsAppPage() {
 
     const initializeConnection = async () => {
       try {
+        // Clear QR code state on initialization
+        setQrCode(null);
         await checkConnection();
         setIsInitialized(true);
       } catch (error) {
@@ -43,15 +45,19 @@ export default function WhatsAppPage() {
     // Initial connection check with retry
     initializeConnection();
 
-    // Only start polling after initial check
+    // Only start polling after initial check and if not connected
     const interval = setInterval(() => {
-      if (isInitialized) {
+      if (isInitialized && !isConnected) {
         checkConnection();
       }
-    }, 2000);
+    }, 5000); // Increased to 5 seconds to reduce load
 
-    return () => clearInterval(interval);
-  }, [isInitialized]);
+    return () => {
+      clearInterval(interval);
+      // Clear QR code state on cleanup
+      setQrCode(null);
+    };
+  }, [isInitialized, isConnected]);
 
   const checkConnection = async () => {
     try {
@@ -108,6 +114,9 @@ export default function WhatsAppPage() {
         if (data.qrCode && !data.connected) {
           console.log('Updating QR code');
           setQrCode(data.qrCode);
+        } else {
+          // Clear QR code if we don't have one or if we're connected
+          setQrCode(null);
         }
         
         // Show disconnect message only when connection is newly lost
@@ -123,6 +132,8 @@ export default function WhatsAppPage() {
       
     } catch (error) {
       console.error('Error checking WhatsApp status:', error);
+      // Clear QR code on error
+      setQrCode(null);
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           throw new Error('Tempo limite excedido ao verificar status do WhatsApp');

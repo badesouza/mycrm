@@ -141,9 +141,9 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
       <div className="flex-1 p-8 ml-64">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-white">Edit Payment</h1>
+            <h1 className="text-2xl font-bold text-white">Editando Pagamento</h1>
           </div>
-          <div className="text-white">Loading...</div>
+          <div className="text-white">Carregando...</div>
         </div>
       </div>
     );
@@ -154,9 +154,9 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
       <div className="flex-1 p-8 ml-64">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-white">Edit Payment</h1>
+            <h1 className="text-2xl font-bold text-white">Editar Pagamento</h1>
           </div>
-          <div className="text-white">Payment not found</div>
+          <div className="text-white">Pagamento não encontrado</div>
         </div>
       </div>
     );
@@ -166,19 +166,19 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
     <div className="flex-1 p-8 ml-64">
       <div className="bg-gray-800 rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-white">Edit Payment</h1>
+          <h1 className="text-2xl font-bold text-white">Editar Pagamento</h1>
         </div>
 
         <div className="mb-6">
           <p className="text-gray-300">
-            Customer: <span className="text-white font-semibold">{payment.customerName}</span>
+            Cliente: <span className="text-white font-semibold">{payment.customerName}</span>
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-2">
-              Amount
+              Valor
             </label>
             <Input
               ref={amountInputRef}
@@ -194,7 +194,7 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
 
           <div>
             <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-300 mb-2">
-              Payment Date
+              Vencimento
             </label>
             <Input
               type="date"
@@ -208,7 +208,7 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
 
           <div>
             <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-300 mb-2">
-              Payment Method
+              Método de Pagamento
             </label>
             <select
               id="paymentMethod"
@@ -217,9 +217,9 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
               onChange={(e) => setPayment({ ...payment, paymentMethod: e.target.value })}
               className="w-full bg-gray-700 text-white border-gray-600 rounded-md px-3 py-2"
             >
-              <option value="credit_card">Credit Card</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="cash">Cash</option>
+              <option value="pix">PIX</option>
+              <option value="boleto">Boleto</option>
+              <option value="dinheiro">Dinheiro</option>
             </select>
           </div>
 
@@ -234,9 +234,9 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
               onChange={(e) => setPayment({ ...payment, status: e.target.value })}
               className="w-full bg-gray-700 text-white border-gray-600 rounded-md px-3 py-2"
             >
-              <option value="paid">Paid</option>
-              <option value="unpaid">Unpaid</option>
-              <option value="pending">Pending</option>
+              <option value="paid">Pago</option>
+              <option value="unpaid">A pagar</option>
+              <option value="pending">Pendente</option>
             </select>
           </div>
 
@@ -246,14 +246,14 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
               onClick={() => router.push('/payments')}
               className="bg-gray-600 hover:bg-gray-700"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               type="submit"
               disabled={saving}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </div>
         </form>

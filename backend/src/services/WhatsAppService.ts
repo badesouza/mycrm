@@ -43,8 +43,9 @@ export class WhatsAppService {
       this.isConnecting = true;
       console.log('Initializing WhatsApp service...');
       
-      // Clear existing session if any
+      // Clear existing session and QR code
       this.clearSession();
+      this.qrCode = null;
       
       this.client = await create({
         session: 'mycrm-session',
@@ -65,6 +66,7 @@ export class WhatsAppService {
           } else if (statusSession === 'DISCONNECTED') {
             this.isConnected = false;
             this.isInitialized = false;
+            this.qrCode = null;
             this.clearSession();
             this.eventEmitter.emit('status', statusSession);
           }
@@ -92,9 +94,13 @@ export class WhatsAppService {
           this.isConnected = true;
           this.qrCode = null;
           console.log('WhatsApp already connected');
+        } else {
+          // Clear QR code if not connected
+          this.qrCode = null;
         }
       } catch (error) {
         console.log('WhatsApp not connected yet');
+        this.qrCode = null;
       }
 
       console.log('WhatsApp service initialized successfully');
@@ -103,6 +109,7 @@ export class WhatsAppService {
       this.isConnecting = false;
       this.isConnected = false;
       this.isInitialized = false;
+      this.qrCode = null;
       this.clearSession();
       throw error;
     } finally {

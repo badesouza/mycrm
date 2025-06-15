@@ -84,6 +84,9 @@ export default function RegisterUserPage() {
         timerProgressBar: true
       });
 
+      // Redirect to users list
+      router.push('/users');
+
       // Clear form
       setFormData({
         name: '',

@@ -33,8 +33,6 @@ export class WhatsAppController {
       console.log('Checking WhatsApp status...');
       const status = this.whatsAppService.getStatus();
       
-      console.log('Status:', status);
-      
       res.json({
         connected: status.isConnected && status.hasClient,
         qrCode: status.qrCode,

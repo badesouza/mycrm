@@ -328,7 +328,7 @@ export default function RegisterCustomerPage() {
 
               <div>
                 <label htmlFor="district" className="block text-sm font-medium text-gray-300 mb-2">
-                  Bairro
+                  Cidade
                 </label>
                 <Input
                   type="text"
@@ -344,7 +344,7 @@ export default function RegisterCustomerPage() {
 
               <div>
                 <label htmlFor="manager" className="block text-sm font-medium text-gray-300 mb-2">
-                  Gerente
+                  Responsável
                 </label>
                 <Input
                   type="text"
@@ -384,7 +384,7 @@ export default function RegisterCustomerPage() {
                   value={formData.amount}
                   onChange={handleChange}
                   required
-                  step="0.01"
+                  step="50.00"
                   min="0"
                   placeholder="Digite o valor"
                   className="w-full bg-gray-700 text-white border-gray-600"
@@ -403,8 +403,8 @@ export default function RegisterCustomerPage() {
                   required
                   className="w-full bg-gray-700 text-white border-gray-600 rounded-md px-3 py-2"
                 >
-                  <option value="credit_card">Cartão de Crédito</option>
-                  <option value="bank_transfer">Transferência Bancária</option>
+                  <option value="pix">PIX</option>
+                  <option value="boleto">Boleto</option>
                   <option value="cash">Dinheiro</option>
                 </select>
               </div>
