@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, DollarSign, LogOut, UserCog } from 'lucide-react';
+import { Home, Users, DollarSign, LogOut, UserCog, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
+import { cn } from '@/lib/utils';
 
 const menuItems = [
   {
@@ -26,6 +27,11 @@ const menuItems = [
     title: 'Usuários',
     path: '/users',
     icon: UserCog,
+  },
+  {
+    title: 'WhatsApp',
+    path: '/whatsapp',
+    icon: MessageSquare,
   },
 ];
 
@@ -84,11 +90,12 @@ export default function Sidebar() {
             <Link
               key={item.title}
               href={item.path}
-              className={`flex items-center space-x-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors
-                ${isActive 
+              className={cn(
+                'flex items-center space-x-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
+                isActive 
                   ? 'bg-gray-700 text-white' 
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
+              )}
             >
               <Icon className="h-5 w-5" />
               <span>{item.title}</span>

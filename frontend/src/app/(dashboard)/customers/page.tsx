@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { Textarea } from '@/components/ui/Textarea';
 import Swal from 'sweetalert2';
 import ClientWrapper from '@/components/ClientWrapper';
 import { useDebounce } from '@/lib/useDebounce';
 import { toast } from '@/components/ui/use-toast';
+import { MessageSquare } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -30,8 +33,12 @@ export default function CustomersPage() {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
   const debouncedSearch = useDebounce(search, 400);
   const router = useRouter();
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     fetchCustomers();
@@ -41,6 +48,7 @@ export default function CustomersPage() {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
+      setIsSearching(true);
       const token = localStorage.getItem('token');
       console.log('Token from localStorage:', token ? token.substring(0, 10) + '...' : 'No token found');
 
@@ -52,7 +60,7 @@ export default function CustomersPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         pageSize: pageSize.toString(),
-        search: debouncedSearch,
+        search: debouncedSearch.toLowerCase().trim(),
       });
 
       console.log('Fetching customers with params:', params.toString());
@@ -90,6 +98,7 @@ export default function CustomersPage() {
       });
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
   };
 
@@ -146,6 +155,120 @@ export default function CustomersPage() {
     }
   };
 
+  const handleWhatsAppClick = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setIsWhatsAppOpen(true);
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!selectedCustomer?.phone || !message.trim()) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, digite uma mensagem',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Format phone number: remove all non-numeric characters and ensure it has country code
+      const formattedPhone = selectedCustomer.phone
+        .replace(/\D/g, '') // Remove all non-numeric characters
+        .replace(/^(\d{2})9(\d{8})$/, '$1$2') // Remove the 9 after DDD
+        + '@c.us'; // Add WhatsApp API suffix
+
+      console.log('Original phone:', selectedCustomer.phone);
+      console.log('Formatted phone:', formattedPhone);
+
+      // Check WhatsApp connection status first
+      const statusResponse = await fetch('http://localhost:3001/api/whatsapp/status', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!statusResponse.ok) {
+        const errorData = await statusResponse.json().catch(() => ({}));
+        console.error('WhatsApp status error:', errorData);
+        throw new Error(errorData.message || 'Failed to check WhatsApp status');
+      }
+
+      const statusData = await statusResponse.json();
+      console.log('WhatsApp status:', statusData);
+
+      if (!statusData.connected) {
+        let errorMessage = 'WhatsApp não está conectado.';
+        if (statusData.details) {
+          if (!statusData.details.isInitialized) {
+            errorMessage += ' O serviço não foi inicializado.';
+          } else if (!statusData.details.isConnected) {
+            errorMessage += ' Aguardando conexão.';
+          } else if (!statusData.details.hasClient) {
+            errorMessage += ' Cliente não disponível.';
+          }
+        }
+        toast({
+          title: 'Erro',
+          description: errorMessage + ' Por favor, conecte o WhatsApp primeiro.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      console.log('Sending WhatsApp message:', {
+        url: 'http://localhost:3001/api/whatsapp/send',
+        phone: formattedPhone,
+        message: message.trim(),
+        token: token.substring(0, 10) + '...',
+      });
+
+      const response = await fetch('http://localhost:3001/api/whatsapp/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          to: formattedPhone,
+          message: message.trim(),
+        }),
+      });
+
+      console.log('WhatsApp response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('WhatsApp error response:', errorData);
+        throw new Error(errorData.message || 'Failed to send WhatsApp message');
+      }
+
+      const data = await response.json();
+      console.log('WhatsApp success response:', data);
+
+      toast({
+        title: 'Sucesso',
+        description: 'Mensagem enviada com sucesso!',
+      });
+
+      setIsWhatsAppOpen(false);
+      setMessage('');
+      setSelectedCustomer(null);
+    } catch (error) {
+      console.error('Error sending WhatsApp message:', error);
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Falha ao enviar mensagem',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <ClientWrapper>
       <div className="flex-1 p-8 ml-64">
@@ -157,7 +280,10 @@ export default function CustomersPage() {
                 type="text"
                 placeholder="Buscar clientes..."
                 value={search}
-                onChange={e => { setSearch(e.target.value); setPage(1); }}
+                onChange={e => { 
+                  setSearch(e.target.value); 
+                  setPage(1); 
+                }}
                 className="rounded-md px-3 py-2 bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{ minWidth: 220 }}
               />
@@ -171,7 +297,19 @@ export default function CustomersPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center h-40 text-white">Loading...</div>
+            <div className="flex items-center justify-center h-40 text-white">
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                <span>Carregando...</span>
+              </div>
+            </div>
+          ) : isSearching ? (
+            <div className="flex items-center justify-center h-40 text-white">
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                <span>Buscando...</span>
+              </div>
+            </div>
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -191,6 +329,9 @@ export default function CustomersPage() {
                         Localização
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Vencimento
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Pagamento
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -204,13 +345,13 @@ export default function CustomersPage() {
                   <tbody className="bg-gray-800 divide-y divide-gray-700">
                     {loading ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-4 text-center text-gray-400">
+                        <td colSpan={8} className="px-6 py-4 text-center text-gray-400">
                           Carregando...
                         </td>
                       </tr>
                     ) : customers.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-4 text-center text-gray-400">
+                        <td colSpan={8} className="px-6 py-4 text-center text-gray-400">
                           Nenhum cliente encontrado
                         </td>
                       </tr>
@@ -242,6 +383,9 @@ export default function CustomersPage() {
                             <div>{customer.district}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                            <div>{new Date(customer.due_date).toLocaleDateString('pt-BR')}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                             <div>{customer.amount.toLocaleString('pt-BR', {
                               style: 'currency',
                               currency: 'BRL'
@@ -258,19 +402,33 @@ export default function CustomersPage() {
                               {customer.status === 'active' ? 'Ativo' : 'Inativo'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Button
-                              onClick={() => router.push(`/customers/${customer.id}/edit`)}
-                              className="text-blue-400 hover:text-blue-300 mr-4"
-                            >
-                              Editar
-                            </Button>
-                            <Button
-                              onClick={() => handleDelete(customer.id)}
-                              className="text-red-400 hover:text-red-300"
-                            >
-                              Excluir
-                            </Button>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleWhatsAppClick(customer)}
+                                className="text-green-500 hover:text-green-400"
+                              >
+                                <MessageSquare className="h-4 w-4 mr-1" />
+                                WhatsApp
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => router.push(`/customers/edit/${customer.id}`)}
+                              >
+                                Editar
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDelete(customer.id)}
+                                className="text-red-500 hover:text-red-400"
+                              >
+                                Excluir
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -314,6 +472,42 @@ export default function CustomersPage() {
           )}
         </div>
       </div>
+
+      <Dialog open={isWhatsAppOpen} onOpenChange={setIsWhatsAppOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle>Enviar mensagem WhatsApp</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <p className="text-sm text-gray-400">
+                Enviando para: {selectedCustomer?.name} ({selectedCustomer?.phone})
+              </p>
+              <Textarea
+                placeholder="Digite sua mensagem..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="min-h-[100px] bg-gray-700 border-gray-600 text-white"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsWhatsAppOpen(false);
+                setMessage('');
+                setSelectedCustomer(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleSendWhatsApp}>
+              Enviar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ClientWrapper>
   );
 } 

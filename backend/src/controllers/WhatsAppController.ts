@@ -11,34 +11,79 @@ export class WhatsAppController {
 
   private async initializeWhatsApp() {
     try {
-      await this.whatsAppService.initialize();
-      
       // Listen for QR code updates
-      this.whatsAppService.onQR((qrCode) => {
-        console.log('New QR Code received');
+      this.whatsAppService.onQR((qrCode: string) => {
+        console.log('QR Code updated:', qrCode.substring(0, 50) + '...');
       });
 
       // Listen for status updates
-      this.whatsAppService.onStatus((status) => {
-        console.log('WhatsApp status:', status);
+      this.whatsAppService.onStatus((status: string) => {
+        console.log('WhatsApp status updated:', status);
       });
+
+      // Initialize the service
+      await this.whatsAppService.initialize();
     } catch (error) {
-      console.error('Failed to initialize WhatsApp:', error);
+      console.error('Error initializing WhatsApp:', error);
     }
   }
 
   async getStatus(req: Request, res: Response) {
     try {
-      const isReady = this.whatsAppService.isReady();
-      const qrCode = this.whatsAppService.getQRCode();
-
+      console.log('Checking WhatsApp status...');
+      const status = this.whatsAppService.getStatus();
+      
+      console.log('Status:', status);
+      
       res.json({
-        connected: isReady,
-        qrCode: qrCode
+        connected: status.isConnected && status.hasClient,
+        qrCode: status.qrCode,
+        details: status
       });
     } catch (error) {
       console.error('Error getting WhatsApp status:', error);
-      res.status(500).json({ error: 'Failed to get WhatsApp status' });
+      res.status(500).json({ 
+        error: 'Failed to get WhatsApp status',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  async sendMessage(req: Request, res: Response) {
+    try {
+      const { to, message } = req.body;
+
+      if (!to || !message) {
+        console.error('Missing required fields:', { to, message });
+        return res.status(400).json({ 
+          error: 'Phone number and message are required',
+          details: { to, message }
+        });
+      }
+
+      console.log('Attempting to send WhatsApp message:', {
+        to,
+        messageLength: message.length,
+        isConnected: this.whatsAppService.isReady()
+      });
+
+      if (!this.whatsAppService.isReady()) {
+        console.error('WhatsApp is not connected');
+        return res.status(503).json({ 
+          error: 'WhatsApp is not connected',
+          details: 'Please ensure WhatsApp is connected before sending messages'
+        });
+      }
+
+      const result = await this.whatsAppService.sendMessage(to, message);
+      console.log('Message sent successfully:', result);
+      res.json({ success: true, result });
+    } catch (error) {
+      console.error('Error sending WhatsApp message:', error);
+      res.status(500).json({ 
+        error: 'Failed to send message',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   }
 
@@ -48,27 +93,7 @@ export class WhatsAppController {
       res.json({ success: true });
     } catch (error) {
       console.error('Error disconnecting WhatsApp:', error);
-      res.status(500).json({ error: 'Failed to disconnect WhatsApp' });
-    }
-  }
-
-  async sendMessage(req: Request, res: Response) {
-    try {
-      const { to, message } = req.body;
-
-      if (!to || !message) {
-        return res.status(400).json({ error: 'Phone number and message are required' });
-      }
-
-      if (!this.whatsAppService.isReady()) {
-        return res.status(503).json({ error: 'WhatsApp service is not ready' });
-      }
-
-      const response = await this.whatsAppService.sendMessage(to, message);
-      res.json({ success: true, response });
-    } catch (error) {
-      console.error('Error sending WhatsApp message:', error);
-      res.status(500).json({ error: 'Failed to send WhatsApp message' });
+      res.status(500).json({ error: 'Failed to disconnect' });
     }
   }
 } 

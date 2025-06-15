@@ -33,10 +33,6 @@ export default function LoginPage() {
 
       console.log('Login response status:', response.status);
       const data = await response.json();
-      console.log('Login response data:', { 
-        hasToken: !!data.token,
-        user: data.user
-      });
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
@@ -80,6 +76,11 @@ export default function LoginPage() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
+            {error && (
+              <div className="text-red-500 text-sm text-center bg-red-500/10 p-2 rounded-lg">
+                {error}
+              </div>
+            )}
             <div>
               <label htmlFor="email" className="sr-only">
                 Endereço de e-mail

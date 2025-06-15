@@ -20,7 +20,6 @@ if (!process.env.JWT_SECRET) {
 export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers['authorization'];
-    console.log('Auth Header:', authHeader);
 
     if (!authHeader) {
       console.log('No authorization header');
@@ -41,8 +40,6 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
         return res.status(403).json({ message: 'Invalid token' });
       }
 
-      console.log('Decoded token:', decoded);
-
       if (!decoded.id) {
         console.error('No user ID in token');
         return res.status(403).json({ message: 'Invalid token format' });
@@ -55,7 +52,6 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
         status: decoded.status
       };
 
-      console.log('User authenticated:', req.user);
       next();
     });
   } catch (error) {

@@ -39,4 +39,20 @@ uploads/
 
 # Prisma
 prisma/*.db
-prisma/migrations/ 
+prisma/migrations/
+
+# Misc
+.DS_Store
+*.pem
+
+# Vercel
+.vercel
+
+# Typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# WhatsApp tokens
+/tokens
+backend/tokens
+**/tokens 
