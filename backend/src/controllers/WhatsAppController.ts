@@ -5,7 +5,7 @@ export class WhatsAppController {
   private whatsAppService: WhatsAppService;
 
   constructor() {
-    this.whatsAppService = new WhatsAppService();
+    this.whatsAppService = WhatsAppService.getInstance();
     this.initializeWhatsApp();
   }
 
@@ -32,12 +32,16 @@ export class WhatsAppController {
     try {
       console.log('Checking WhatsApp status...');
       const status = this.whatsAppService.getStatus();
+      console.log('WhatsApp service status:', status);
       
-      res.json({
+      const response = {
         connected: status.isConnected && status.hasClient,
         qrCode: status.qrCode,
         details: status
-      });
+      };
+      
+      console.log('Sending response:', response);
+      res.json(response);
     } catch (error) {
       console.error('Error getting WhatsApp status:', error);
       res.status(500).json({ 

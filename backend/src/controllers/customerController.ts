@@ -134,8 +134,8 @@ export const customerController = {
         return res.status(500).json({ message: 'User not found' });
       }
 
-      // Create the initial payment record
-      await prisma.payment.create({
+      // Create the initial payment record automatically
+      const payment = await prisma.payment.create({
         data: {
           customerId: customer.id,
           userId: userId,
@@ -145,6 +145,26 @@ export const customerController = {
           userName: user.name,
           paymentMethod: paymentMethod
         }
+      });
+
+      // Calculate next invoice date (same day next month)
+      const dueDate = new Date(due_date);
+      const nextInvoiceDate = new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, dueDate.getDate());
+
+      // Update customer with next invoice date
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: { next_invoice_at: nextInvoiceDate }
+      });
+
+      console.log('Payment created automatically for customer:', {
+        customerId: customer.id,
+        customerName: customer.name,
+        paymentId: payment.id,
+        amount: payment.amount,
+        due_date: payment.due_date,
+        paymentMethod: payment.paymentMethod,
+        next_invoice_at: nextInvoiceDate
       });
 
       res.status(201).json(customer);

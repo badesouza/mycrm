@@ -46,6 +46,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
             customer: {
               select: {
                 name: true,
+                phone: true,
               },
             },
           },
@@ -68,12 +69,23 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
           id: payment.id,
           customerId: payment.customerId,
           customerName: payment.customer.name,
+          customerPhone: payment.customer.phone,
           amount: payment.amount,
-          paymentDate: payment.due_date.toISOString(),
+          paymentDate: payment.due_date.toISOString(), // Mantido para compatibilidade
+          due_date: payment.due_date.toISOString(),
+          payment_date: payment.payment_date ? payment.payment_date.toISOString() : null,
           paymentMethod: payment.paymentMethod,
           status: payment.status,
           userName: payment.userName,
         };
+        
+        // Debug log para verificar se o telefone está sendo incluído
+        console.log('🔍 Payment transformation debug:', {
+          id: payment.id,
+          customerName: payment.customer.name,
+          customerPhone: payment.customer.phone,
+          customerPhoneType: typeof payment.customer.phone
+        });
         console.log('Transformed payment:', transformed); // Log the transformed payment
         return transformed;
       });
@@ -114,6 +126,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
         customer: {
           select: {
             name: true,
+            phone: true,
           },
         },
       },
@@ -131,8 +144,11 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
       id: payment.id,
       customerId: payment.customerId,
       customerName: payment.customer.name,
+      customerPhone: payment.customer.phone,
       amount: payment.amount,
-      paymentDate: payment.due_date.toISOString(),
+      paymentDate: payment.due_date.toISOString(), // Mantido para compatibilidade
+      due_date: payment.due_date.toISOString(),
+      payment_date: payment.payment_date ? payment.payment_date.toISOString() : null,
       paymentMethod: payment.paymentMethod,
       status: payment.status,
       userName: payment.userName,
@@ -190,7 +206,22 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
         }
       });
 
+      // Calculate next invoice date (same day next month)
+      const dueDate = new Date(due_date);
+      const nextInvoiceDate = new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, dueDate.getDate());
+
+      // Update customer with next invoice date
+      await prisma.customer.update({
+        where: { id: customerId },
+        data: { next_invoice_at: nextInvoiceDate }
+      });
+
       console.log('Payment created:', payment);
+      console.log('Next invoice date updated for customer:', {
+        customerId,
+        next_invoice_at: nextInvoiceDate
+      });
+      
       res.status(201).json(payment);
     } catch (prismaError) {
       console.error('Prisma error:', prismaError);
