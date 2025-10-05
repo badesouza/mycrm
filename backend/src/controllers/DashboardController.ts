@@ -10,7 +10,8 @@ export class DashboardController {
 
   async getStats(req: Request, res: Response) {
     try {
-      const stats = await this.dashboardService.getStats();
+      const { start, end } = req.query as { start?: string; end?: string };
+      const stats = await this.dashboardService.getStats(start, end);
       res.json(stats);
     } catch (error) {
       console.error('Error in DashboardController.getStats:', error);

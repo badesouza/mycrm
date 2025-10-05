@@ -45,9 +45,18 @@ export const getUsers = async (req: Request, res: Response) => {
   try {
     const users = await prisma.user.findMany({
       where: {
-        email: {
-          not: 'admin@example.com'
-        }
+        AND: [
+          {
+            email: {
+              not: 'admin@example.com'
+            }
+          },
+          {
+            email: {
+              not: 'admin@gesfood.com'
+            }
+          }
+        ]
       },
       select: {
         id: true,
