@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import ClientWrapper from '@/components/ClientWrapper';
 import { use } from 'react';
 import Image from 'next/image';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 
 interface Customer {
   id: string;
@@ -210,7 +211,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
   if (loading) {
     return (
       <ClientWrapper>
-        <div className="flex-1 p-8 ml-64">
+    <div className="flex-1 p-8">
           <div className="bg-gray-800 rounded-lg shadow-lg p-6">
             <div className="text-white">Loading...</div>
           </div>

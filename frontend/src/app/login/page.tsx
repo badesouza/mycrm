@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -56,8 +57,8 @@ export default function LoginPage() {
         description: 'Login successful!',
       });
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Redirect to home
+      router.push('/home');
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during login');
@@ -69,10 +70,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            GesFood CRM
-          </h2>
+        <div className="flex flex-col items-center gap-3">
+          <Image src="/logo.png" alt="Gesfood CRM" width={96} height={96} priority />
+          <h2 className="mt-2 text-center text-2xl font-bold text-white">Gesfood CRM</h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">

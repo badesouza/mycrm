@@ -122,7 +122,7 @@ export default function RegisterUserPage() {
   };
 
   return (
-    <div className="flex-1 p-8 ml-64">
+    <div className="flex-1 p-8">
       <div className="bg-gray-800 rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-white">Cadastrar Novo Usuário</h1>

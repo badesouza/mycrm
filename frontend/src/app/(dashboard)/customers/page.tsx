@@ -11,6 +11,7 @@ import { useDebounce } from '@/lib/useDebounce';
 import { toast } from '@/components/ui/use-toast';
 import { MessageSquare } from 'lucide-react';
 import Image from 'next/image';
+import { formatPhoneNumber } from '@/lib/phoneUtils';
 
 interface Customer {
   id: string;
@@ -140,6 +141,9 @@ export default function CustomersPage() {
           icon: 'success',
           background: '#1f2937',
           color: '#fff',
+          showConfirmButton: false,
+          timer: 1000,
+          timerProgressBar: true
         });
 
         fetchCustomers();
@@ -282,7 +286,7 @@ export default function CustomersPage() {
 
   return (
     <ClientWrapper>
-      <div className="flex-1 p-8 ml-64">
+    <div className="flex-1 p-8">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
             <h1 className="text-2xl font-bold text-white">Clientes</h1>
@@ -393,7 +397,7 @@ export default function CustomersPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                             <div className="font-medium">{customer.manager}</div>
                             <div>{customer.email}</div>
-                            <div className="text-gray-400">{customer.phone}</div>
+                            <div className="text-gray-400">{formatPhoneNumber(customer.phone)}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                             <div>{customer.district}</div>
@@ -497,7 +501,7 @@ export default function CustomersPage() {
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <p className="text-sm text-gray-400">
-                Enviando para: {selectedCustomer?.name} ({selectedCustomer?.phone})
+                Enviando para: {selectedCustomer?.name} ({formatPhoneNumber(selectedCustomer?.phone)})
               </p>
               <Textarea
                 placeholder="Digite sua mensagem..."

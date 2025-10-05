@@ -1,17 +1,23 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Home, Users, DollarSign, LogOut, UserCog, MessageSquare } from 'lucide-react';
+import { Home as HomeIcon, Users, DollarSign, LogOut, UserCog, MessageSquare, LayoutDashboard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
   {
-    title: 'Painel',
+    title: 'Home',
+    path: '/home',
+    icon: HomeIcon,
+  },
+  {
+    title: 'Dashboard',
     path: '/dashboard',
-    icon: Home,
+    icon: LayoutDashboard,
   },
   {
     title: 'Clientes',
@@ -19,7 +25,7 @@ const menuItems = [
     icon: Users,
   },
   {
-    title: 'Pagamentos',
+    title: 'Contas a receber',
     path: '/payments',
     icon: DollarSign,
   },
@@ -75,13 +81,18 @@ export default function Sidebar() {
     }
   };
 
+  useEffect(() => {
+    // Sidebar always collapsed; expose fixed width for layout
+    document.documentElement.style.setProperty('--sidebar-width', '5rem');
+  }, []);
+
   return (
-    <div className="fixed left-0 top-0 h-screen w-64 bg-gray-800 p-4">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">GesFood CRM</h1>
+    <div className={cn('fixed left-0 top-0 h-screen bg-gray-800 transition-all duration-300 w-20 p-3')}>
+      <div className="mb-6 flex items-center justify-center">
+        <div className="text-white font-bold text-lg">G</div>
       </div>
 
-      <nav className="space-y-2">
+      <nav className={cn('space-y-2')}>
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.path;
@@ -91,26 +102,30 @@ export default function Sidebar() {
               key={item.title}
               href={item.path}
               className={cn(
-                'flex items-center space-x-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
+                'flex rounded-lg text-sm font-medium transition-colors h-16 w-full items-center justify-center flex-col gap-y-1',
                 isActive 
                   ? 'bg-gray-700 text-white' 
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               )}
+              title={item.title}
             >
-              <Icon className="h-5 w-5" />
-              <span>{item.title}</span>
+              <Icon className="h-5 w-5 shrink-0" />
+              <span className={cn('text-[11px] leading-tight text-center break-words')}>
+                {item.title}
+              </span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="absolute bottom-4 left-4 right-4">
+      <div className={cn('absolute bottom-4 right-0 left-0 px-2')}>
         <button
-          className="flex w-full items-center space-x-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+          className={cn('flex w-full items-center rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white h-10 justify-center gap-x-2')}
           onClick={handleLogout}
+          title={'Sair'}
         >
           <LogOut className="h-5 w-5" />
-          <span>Sair</span>
+          <span className="text-[11px] leading-tight">Sair</span>
         </button>
       </div>
     </div>

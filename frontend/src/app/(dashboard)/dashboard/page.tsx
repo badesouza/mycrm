@@ -1,253 +1,189 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Users, CreditCard, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { toast } from '@/components/ui/use-toast';
 
+type EvolutionPoint = { date: string; total: number };
 interface DashboardStats {
+  period: { start: string; end: string };
   totalCustomers: number;
-  newCustomersThisMonth: number;
+  newCustomersInPeriod: number;
   totalAmount: number;
-  totalPaid: number;
+  forecastInPeriod: number;
+  revenueInPeriod: number;
   totalUnpaid: number;
   performance: number;
+  evolution: EvolutionPoint[];
 }
 
 const API_BASE_URL = 'http://localhost:3001';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalCustomers: 0,
-    newCustomersThisMonth: 0,
-    totalAmount: 0,
-    totalPaid: 0,
-    totalUnpaid: 0,
-    performance: 0
-  });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [start, setStart] = useState<string>('');
+  const [end, setEnd] = useState<string>('');
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
-  useEffect(() => {
-    fetchDashboardStats();
-  }, []);
-
-  const fetchDashboardStats = async () => {
+  const fetchStats = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
-      if (!token) {
-        console.log('No token found in localStorage');
-        toast({
-          title: 'Erro',
-          description: 'Por favor, faça login novamente',
-          variant: 'destructive',
-        });
-        router.push('/login');
-        return;
-      }
+      if (!token) throw new Error('No authentication token found');
 
-      // Test API connection first
-      console.log('Testing API connection...');
-      const apiTestResponse = await fetch(`${API_BASE_URL}/api/test`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      const params = new URLSearchParams();
+      if (start) params.set('start', new Date(start).toISOString());
+      if (end) params.set('end', new Date(end).toISOString());
+
+      const res = await fetch(`${API_BASE_URL}/api/dashboard/stats?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-
-      if (!apiTestResponse.ok) {
-        throw new Error(`API test failed: ${apiTestResponse.status}`);
-      }
-
-      // Test authentication
-      console.log('Testing authentication...');
-      const authTestResponse = await fetch(`${API_BASE_URL}/api/dashboard/test-auth`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!authTestResponse.ok) {
-        const errorData = await authTestResponse.json().catch(() => null);
-        console.error('Auth test failed:', {
-          status: authTestResponse.status,
-          statusText: authTestResponse.statusText,
-          error: errorData
-        });
-        throw new Error(`Authentication failed: ${authTestResponse.status}`);
-      }
-
-      // Fetch dashboard stats
-      console.log('Fetching dashboard stats...');
-      const response = await fetch(`${API_BASE_URL}/api/dashboard/stats`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error('Stats fetch failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData
-        });
-        throw new Error(errorData?.message || `Failed to fetch stats: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Received stats:', data);
+      if (!res.ok) throw new Error('Failed to fetch stats');
+      const data: DashboardStats = await res.json();
       setStats(data);
-    } catch (error) {
-      console.error('Dashboard error:', error);
-      toast({
-        title: 'Erro',
-        description: error instanceof Error ? error.message : 'Falha ao carregar estatísticas',
-        variant: 'destructive',
-      });
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => { fetchStats();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <div className="flex-1 p-8 ml-64">
+    <div className="flex-1 p-8">
       <div className="bg-gray-800 rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold text-white mb-6">Dashboard</h1>
-        
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Customers Card - Blue Theme */}
-          <Card className="bg-blue-900/50 border-blue-800">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-blue-200">Total de Clientes</CardTitle>
-              <Users className="h-4 w-4 text-blue-300" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Total Customers */}
-                <div>
-                  <div className="text-sm text-blue-300">Total</div>
-                  <div className="text-xl font-bold text-blue-100">
-                    {loading ? '...' : stats.totalCustomers}
-                  </div>
-                </div>
 
-                {/* New Customers This Month */}
-                <div>
-                  <div className="text-sm text-blue-300">Novos este mês</div>
-                  <div className="text-lg font-bold text-blue-100">
-                    {loading ? '...' : stats.newCustomersThisMonth}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mt-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push('/customers')}
-                  className="text-blue-200 border-blue-700 hover:bg-blue-800/50"
-                >
-                  Ver Clientes
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push('/customers/register')}
-                  className="text-blue-200 border-blue-700 hover:bg-blue-800/50"
-                >
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Novo Cliente
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payments Card - Green Theme */}
-          <Card className="bg-emerald-900/50 border-emerald-800">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-emerald-200">Faturamento</CardTitle>
-              <CreditCard className="h-4 w-4 text-emerald-300" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Total Amount */}
-                <div>
-                  <div className="text-sm text-emerald-300">Total</div>
-                  <div className="text-xl font-bold text-emerald-100">
-                    {loading ? '...' : new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL'
-                    }).format(stats.totalAmount)}
-                  </div>
-                </div>
-
-                {/* Paid and Unpaid */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-emerald-300">Pago</div>
-                    <div className="text-lg font-bold text-emerald-100">
-                      {loading ? '...' : new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                      }).format(stats.totalPaid)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-emerald-300">Pendente</div>
-                    <div className="text-lg font-bold text-emerald-100">
-                      {loading ? '...' : new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                      }).format(stats.totalUnpaid)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Performance */}
-                <div>
-                  <div className="text-sm text-emerald-300">Performance</div>
-                  <div className="text-lg font-bold text-emerald-100">
-                    {loading ? '...' : new Intl.NumberFormat('pt-BR', {
-                      style: 'percent',
-                      minimumFractionDigits: 1,
-                      maximumFractionDigits: 1
-                    }).format(stats.performance / 100)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mt-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push('/payments')}
-                  className="text-emerald-200 border-emerald-700 hover:bg-emerald-800/50"
-                >
-                  Ver Pagamentos
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push('/payments/new')}
-                  className="text-emerald-200 border-emerald-700 hover:bg-emerald-800/50"
-                >
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Novo Pagamento
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex flex-wrap gap-3 mb-6 items-end">
+          <div>
+            <label className="block text-sm text-gray-300 mb-2">Data início</label>
+            <input type="date" className="bg-gray-700 text-white rounded px-3 py-2" value={start} onChange={e => setStart(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-300 mb-2">Data fim</label>
+            <input type="date" className="bg-gray-700 text-white rounded px-3 py-2" value={end} onChange={e => setEnd(e.target.value)} />
+          </div>
+          <Button onClick={fetchStats} className="bg-blue-600 hover:bg-blue-700 text-white">{loading ? 'Buscando...' : 'Pesquisar'}</Button>
         </div>
+
+        {stats && (
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="bg-blue-900/50 border-blue-800">
+              <CardHeader>
+                <CardTitle className="text-blue-200">Clientes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 text-blue-100">
+                  <div>
+                    <div className="text-sm text-blue-300">Novos no período</div>
+                    <div className="text-2xl font-bold">{stats.newCustomersInPeriod}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-blue-300">Total ativos</div>
+                    <div className="text-2xl font-bold">{stats.totalCustomers}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-green-900/40 border-green-800">
+              <CardHeader>
+                <CardTitle className="text-green-200">Faturamento (período)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 text-green-100">
+                  <div>
+                    <div className="text-sm text-green-300">Previsão (período)</div>
+                    <div className="text-xl font-bold">
+                      R$ {Number(stats.forecastInPeriod || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-green-300">Faturado (pago)</div>
+                    <div className="text-xl font-bold">
+                      R$ {Number(stats.revenueInPeriod || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-green-300">Não pago (período)</div>
+                    <div className="text-xl font-bold">
+                      R$ {Number(stats.totalUnpaid || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-green-300">Performance</div>
+                    <div className="text-xl font-bold">
+                      {Number(stats.performance || 0).toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 1 })}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gray-900/40 border-gray-800 md:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-gray-200">Evolução de Clientes (linha)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LineChart data={stats.evolution || []} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
-} 
+}
+
+function LineChart({ data }: { data: EvolutionPoint[] }) {
+  if (!data.length) return <div className="text-gray-400">Sem dados</div>;
+  const width = 800;
+  const height = 240;
+  const padding = 32;
+  const xs = data.map(d => new Date(d.date).getTime());
+  const ys = data.map(d => d.total);
+  const xMin = Math.min(...xs);
+  const xMax = Math.max(...xs);
+  const yMin = Math.min(...ys);
+  const yMax = Math.max(...ys);
+  const xScale = (t: number) => padding + ((t - xMin) / Math.max(1, (xMax - xMin))) * (width - padding * 2);
+  const yScale = (v: number) => height - padding - ((v - yMin) / Math.max(1, (yMax - yMin))) * (height - padding * 2);
+  const points = data.map(d => `${xScale(new Date(d.date).getTime())},${yScale(d.total)}`).join(' ');
+  // Build ticks
+  const xTickCount = 4;
+  const xTicks: Array<{ x: number; label: string }> = [];
+  for (let i = 0; i <= xTickCount; i++) {
+    const t = xMin + ((xMax - xMin) * i) / xTickCount;
+    const date = new Date(t);
+    const label = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    xTicks.push({ x: xScale(t), label });
+  }
+
+  const yTicksValues = [yMin, Math.round((yMin + yMax) / 2), yMax];
+  const yTicks = yTicksValues.map(v => ({ y: yScale(v), label: String(v) }));
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-60">
+      {/* Axes */}
+      <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#374151" strokeWidth="1" />
+      <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#374151" strokeWidth="1" />
+      {/* X ticks */}
+      {xTicks.map((t, idx) => (
+        <g key={`xt-${idx}`}>
+          <line x1={t.x} y1={height - padding} x2={t.x} y2={height - padding + 6} stroke="#4B5563" strokeWidth="1" />
+          <text x={t.x} y={height - padding + 18} textAnchor="middle" fontSize="10" fill="#9CA3AF">{t.label}</text>
+        </g>
+      ))}
+      {/* Y ticks */}
+      {yTicks.map((t, idx) => (
+        <g key={`yt-${idx}`}>
+          <line x1={padding - 6} y1={t.y} x2={padding} y2={t.y} stroke="#4B5563" strokeWidth="1" />
+          <text x={padding - 8} y={t.y + 3} textAnchor="end" fontSize="10" fill="#9CA3AF">{t.label}</text>
+        </g>
+      ))}
+      <polyline fill="none" stroke="#60A5FA" strokeWidth="2" points={points} />
+    </svg>
+  );
+}

@@ -12,6 +12,8 @@ interface Payment {
   customerName: string;
   amount: number;
   paymentDate: string;
+  payment_date: string | null;
+  due_date: string;
   paymentMethod: string;
   status: string;
 }
@@ -48,10 +50,8 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
       return;
     }
     console.log('EditPaymentForm received ID:', id);
-    fetchPayment();
-  }, [id, router]);
-
-  const fetchPayment = async () => {
+    
+    const fetchPayment = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -85,7 +85,10 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
     } finally {
       setLoading(false);
     }
-  };
+    };
+    
+    fetchPayment();
+  }, [id, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +110,8 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
         },
         body: JSON.stringify({
           amount: payment.amount,
-          due_date: payment.paymentDate,
+          due_date: payment.due_date,
+          payment_date: payment.payment_date,
           paymentMethod: payment.paymentMethod,
           status: payment.status,
         }),
@@ -163,7 +167,7 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
   }
 
   return (
-    <div className="flex-1 p-8 ml-64">
+    <div className="flex-1 p-8">
       <div className="bg-gray-800 rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-white">Editar Pagamento</h1>
@@ -193,15 +197,14 @@ export default function EditPaymentForm({ paymentId }: EditPaymentFormProps) {
           </div>
 
           <div>
-            <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-300 mb-2">
-              Vencimento
+            <label htmlFor="payment_date" className="block text-sm font-medium text-gray-300 mb-2">
+              Data Pagamento
             </label>
             <Input
               type="date"
-              id="paymentDate"
-              required
-              value={payment.paymentDate.split('T')[0]}
-              onChange={(e) => setPayment({ ...payment, paymentDate: e.target.value })}
+              id="payment_date"
+              value={payment.payment_date ? payment.payment_date.split('T')[0] : ''}
+              onChange={(e) => setPayment({ ...payment, payment_date: e.target.value || null })}
               className="w-full bg-gray-700 text-white border-gray-600"
             />
           </div>

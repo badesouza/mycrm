@@ -7,10 +7,14 @@ import { Input } from '@/components/ui/input';
 import Cookies from 'js-cookie';
 import Swal from 'sweetalert2';
 import ClientWrapper from '@/components/ClientWrapper';
+import { PaymentMethod, getPaymentMethodLabel } from '@/types/paymentMethods';
 
 interface Customer {
   id: string;
   name: string;
+  amount: number;
+  due_date: string;
+  paymentMethod: string;
 }
 
 export default function RegisterPaymentPage() {
@@ -18,7 +22,7 @@ export default function RegisterPaymentPage() {
     customerId: '',
     amount: '',
     due_date: '',
-    paymentMethod: 'credit_card',
+    paymentMethod: PaymentMethod.CREDIT_CARD,
     status: 'unpaid'
   });
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -35,16 +39,16 @@ export default function RegisterPaymentPage() {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        console.error('No token found');
+        console.error('Token não encontrado');
         Swal.fire({
           icon: 'error',
-          title: 'Authentication Error',
-          text: 'Please log in again to continue'
+          title: 'Erro de Autenticação',
+          text: 'Por favor, faça login novamente para continuar'
         });
         return;
       }
 
-      console.log('Fetching customers with token:', token.substring(0, 10) + '...');
+      console.log('Buscando clientes com token:', token.substring(0, 10) + '...');
       
       const response = await fetch('http://localhost:3001/api/customers', {
         headers: {
@@ -53,23 +57,28 @@ export default function RegisterPaymentPage() {
         }
       });
 
-      console.log('Response status:', response.status);
+      console.log('Status da resposta:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error response:', errorData);
-        throw new Error(errorData.message || 'Failed to fetch customers');
+        console.error('Resposta de erro:', errorData);
+        throw new Error(errorData.message || 'Falha ao buscar clientes');
       }
 
       const { data } = await response.json();
-      console.log('Fetched customers:', data);
-      setCustomers(data);
+      console.log('Clientes encontrados:', data);
+      
+      // Ordenar clientes alfabeticamente
+      const sortedCustomers = data.sort((a: Customer, b: Customer) => 
+        a.name.localeCompare(b.name, 'pt-BR')
+      );
+      setCustomers(sortedCustomers);
     } catch (error) {
-      console.error('Error fetching customers:', error);
+      console.error('Erro ao buscar clientes:', error);
       Swal.fire({
         icon: 'error',
-        title: 'Error',
-        text: error instanceof Error ? error.message : 'Failed to fetch customers'
+        title: 'Erro',
+        text: error instanceof Error ? error.message : 'Falha ao buscar clientes'
       });
     } finally {
       setLoading(false);
@@ -78,6 +87,22 @@ export default function RegisterPaymentPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // Se for seleção de cliente, preencher campos automaticamente
+    if (name === 'customerId') {
+      const selectedCustomer = customers.find(customer => customer.id === value);
+      if (selectedCustomer) {
+        setFormData(prev => ({
+          ...prev,
+          customerId: value,
+          amount: selectedCustomer.amount.toString(),
+          due_date: selectedCustomer.due_date ? new Date(selectedCustomer.due_date).toISOString().split('T')[0] : '',
+          paymentMethod: (selectedCustomer.paymentMethod as PaymentMethod) || PaymentMethod.CREDIT_CARD
+        }));
+        return;
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -91,8 +116,8 @@ export default function RegisterPaymentPage() {
     try {
       const token = Cookies.get('token');
       if (!token) {
-        console.error('No token found');
-        Swal.fire('Error', 'Authentication token not found', 'error');
+        console.error('Token não encontrado');
+        Swal.fire('Erro', 'Token de autenticação não encontrado', 'error');
         return;
       }
 
@@ -101,14 +126,14 @@ export default function RegisterPaymentPage() {
         const tokenParts = token.split('.');
         if (tokenParts.length === 3) {
           const payload = JSON.parse(atob(tokenParts[1]));
-          console.log('Token payload:', payload);
+          console.log('Conteúdo do token:', payload);
         }
       } catch (e) {
-        console.error('Error decoding token:', e);
+        console.error('Erro ao decodificar token:', e);
       }
 
-      console.log('Submitting payment with token:', token.substring(0, 20) + '...');
-      console.log('Form data:', formData);
+      console.log('Enviando pagamento com token:', token.substring(0, 20) + '...');
+      console.log('Dados do formulário:', formData);
 
       const response = await fetch('http://localhost:3001/api/payments', {
         method: 'POST',
@@ -125,11 +150,11 @@ export default function RegisterPaymentPage() {
         })
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('Status da resposta:', response.status);
+      console.log('Cabeçalhos da resposta:', Object.fromEntries(response.headers.entries()));
 
       const responseData = await response.json();
-      console.log('Response data:', responseData);
+      console.log('Dados da resposta:', responseData);
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -164,7 +189,7 @@ export default function RegisterPaymentPage() {
         customerId: '',
         amount: '',
         due_date: '',
-        paymentMethod: 'credit_card',
+        paymentMethod: PaymentMethod.CREDIT_CARD,
         status: 'unpaid'
       });
 
@@ -188,7 +213,7 @@ export default function RegisterPaymentPage() {
 
   return (
     <ClientWrapper>
-      <div className="flex-1 p-8 ml-64">
+    <div className="flex-1 p-8">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-white">Registrar Novo Pagamento</h1>
@@ -251,7 +276,7 @@ export default function RegisterPaymentPage() {
 
               <div>
                 <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-300 mb-2">
-                  Payment Method
+                  Método de Pagamento
                 </label>
                 <select
                   id="paymentMethod"
@@ -261,9 +286,12 @@ export default function RegisterPaymentPage() {
                   required
                   className="w-full bg-gray-700 text-white border-gray-600 rounded-md px-3 py-2"
                 >
-                  <option value="credit_card">Credit Card</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="cash">Cash</option>
+                  <option value={PaymentMethod.PIX}>{getPaymentMethodLabel(PaymentMethod.PIX)}</option>
+                  <option value={PaymentMethod.BOLETO}>{getPaymentMethodLabel(PaymentMethod.BOLETO)}</option>
+                  <option value={PaymentMethod.CREDIT_CARD}>{getPaymentMethodLabel(PaymentMethod.CREDIT_CARD)}</option>
+                  <option value={PaymentMethod.DEBT_CARD}>{getPaymentMethodLabel(PaymentMethod.DEBT_CARD)}</option>
+                  <option value={PaymentMethod.BANK_TRANSFER}>{getPaymentMethodLabel(PaymentMethod.BANK_TRANSFER)}</option>
+                  <option value={PaymentMethod.CASH}>{getPaymentMethodLabel(PaymentMethod.CASH)}</option>
                 </select>
               </div>
 

@@ -1,19 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import ClientWrapper from '@/components/ClientWrapper';
 import { useDebounce } from '@/lib/useDebounce';
 import { toast } from '@/components/ui/use-toast';
 import Swal from 'sweetalert2';
+import { getPaymentMethodLabel } from '@/types/paymentMethods';
+import WhatsAppMessageModal from '@/components/WhatsAppMessageModal';
 
 interface Payment {
   id: string;
   customerId: string;
   customerName: string;
+  customerPhone?: string;
   amount: number;
   paymentDate: string;
+  payment_date: string | null;
+  due_date: string;
   paymentMethod: string;
   status: string;
   userName: string;
@@ -29,12 +34,12 @@ export default function PaymentsPage() {
   const [totalItems, setTotalItems] = useState(0);
   const debouncedSearch = useDebounce(search, 400);
   const router = useRouter();
+  
+  // Estados para o modal WhatsApp
+  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
-  useEffect(() => {
-    fetchPayments();
-  }, [debouncedSearch, page, pageSize]);
-
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
@@ -88,7 +93,11 @@ export default function PaymentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch, page, pageSize]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
 
   const handleDelete = async (id: string) => {
     const result = await Swal.fire({
@@ -163,8 +172,26 @@ export default function PaymentsPage() {
     router.push(`/payments/${id}/edit`);
   };
 
+  const handleWhatsAppMessage = (payment: Payment) => {
+    console.log('Opening WhatsApp modal for payment:', payment);
+    console.log('Customer phone:', payment.customerPhone);
+    console.log('Customer phone type:', typeof payment.customerPhone);
+    console.log('Customer phone value:', JSON.stringify(payment.customerPhone));
+    setSelectedPayment(payment);
+    setWhatsappModalOpen(true);
+  };
+
   const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    
     const date = new Date(dateString);
+    
+    // Verifica se a data é válida
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date:', dateString);
+      return '-';
+    }
+    
     return date.toLocaleDateString('pt-BR', {
       timeZone: 'UTC',
       day: '2-digit',
@@ -206,29 +233,17 @@ export default function PaymentsPage() {
     }
   };
 
-  const getPaymentMethodLabel = (method: string) => {
-    switch (method) {
-      case 'pix':
-        return 'PIX';
-      case 'boleto':
-        return 'Boleto';
-      case 'cash':
-        return 'Dinheiro';
-      default:
-        return method;
-    }
-  };
 
   return (
     <ClientWrapper>
-      <div className="flex-1 p-8 ml-64">
+      <div className="flex-1 p-8">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-            <h1 className="text-2xl font-bold text-white">Pagamentos</h1>
+            <h1 className="text-2xl font-bold text-white">Contas a receber</h1>
             <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-center">
               <input
                 type="text"
-                placeholder="Search payments..."
+                placeholder="Pesquisar pagamentos..."
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1); }}
                 className="rounded-md px-3 py-2 bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -258,7 +273,10 @@ export default function PaymentsPage() {
                         Valor
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Data
+                        Data Vencimento
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Data Pagamento
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Método
@@ -293,7 +311,10 @@ export default function PaymentsPage() {
                               {formatCurrency(payment.amount)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                              {formatDate(payment.paymentDate)}
+                              {formatDate(payment.due_date)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                              {payment.payment_date ? formatDate(payment.payment_date) : '-'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                               {getPaymentMethodLabel(payment.paymentMethod)}
@@ -323,7 +344,13 @@ export default function PaymentsPage() {
                                 }}
                                 className="text-blue-400 hover:text-blue-300 mr-4"
                               >
-                                Editar
+                                Receber
+                              </Button>
+                              <Button
+                                onClick={() => handleWhatsAppMessage(payment)}
+                                className="text-green-400 hover:text-green-300 mr-4"
+                              >
+                                WhatsApp
                               </Button>
                               <Button
                                 onClick={() => handleDelete(payment.id)}
@@ -369,6 +396,22 @@ export default function PaymentsPage() {
           )}
         </div>
       </div>
+      
+      {/* Modal WhatsApp */}
+      {selectedPayment && (
+        <WhatsAppMessageModal
+          isOpen={whatsappModalOpen}
+          onClose={() => {
+            setWhatsappModalOpen(false);
+            setSelectedPayment(null);
+          }}
+          customerName={selectedPayment.customerName}
+          customerPhone={selectedPayment.customerPhone || ''}
+          paymentId={selectedPayment.id}
+          dueDate={selectedPayment.due_date}
+          amount={selectedPayment.amount}
+        />
+      )}
     </ClientWrapper>
   );
 } 

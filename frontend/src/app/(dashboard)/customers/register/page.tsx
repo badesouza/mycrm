@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import Swal from 'sweetalert2';
 import Image from 'next/image';
 import ClientWrapper from '@/components/ClientWrapper';
+import { PaymentMethod, getPaymentMethodLabel } from '@/types/paymentMethods';
 
 export default function RegisterCustomerPage() {
   const [formData, setFormData] = useState({
@@ -17,7 +18,7 @@ export default function RegisterCustomerPage() {
     manager: '',
     due_date: '',
     amount: '',
-    paymentMethod: 'credit_card',
+    paymentMethod: PaymentMethod.PIX,
     imageLogo: null as File | null
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -201,7 +202,7 @@ export default function RegisterCustomerPage() {
         manager: '',
         due_date: '',
         amount: '',
-        paymentMethod: 'credit_card',
+        paymentMethod: PaymentMethod.PIX,
         imageLogo: null
       });
       setImagePreview(null);
@@ -226,7 +227,7 @@ export default function RegisterCustomerPage() {
 
   return (
     <ClientWrapper>
-      <div className="flex-1 p-8 ml-64">
+    <div className="flex-1 p-8">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-white">Cadastrar Novo Cliente</h1>
@@ -403,9 +404,12 @@ export default function RegisterCustomerPage() {
                   required
                   className="w-full bg-gray-700 text-white border-gray-600 rounded-md px-3 py-2"
                 >
-                  <option value="pix">PIX</option>
-                  <option value="boleto">Boleto</option>
-                  <option value="cash">Dinheiro</option>
+                  <option value={PaymentMethod.PIX}>{getPaymentMethodLabel(PaymentMethod.PIX)}</option>
+                  <option value={PaymentMethod.BOLETO}>{getPaymentMethodLabel(PaymentMethod.BOLETO)}</option>
+                  <option value={PaymentMethod.CREDIT_CARD}>{getPaymentMethodLabel(PaymentMethod.CREDIT_CARD)}</option>
+                  <option value={PaymentMethod.DEBT_CARD}>{getPaymentMethodLabel(PaymentMethod.DEBT_CARD)}</option>
+                  <option value={PaymentMethod.BANK_TRANSFER}>{getPaymentMethodLabel(PaymentMethod.BANK_TRANSFER)}</option>
+                  <option value={PaymentMethod.CASH}>{getPaymentMethodLabel(PaymentMethod.CASH)}</option>
                 </select>
               </div>
             </div>
