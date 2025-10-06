@@ -16,7 +16,7 @@ router.get('/status', authenticateToken, whatsAppController.getStatus.bind(whats
 // Check session validity
 router.get('/session-valid', authenticateToken, async (req, res) => {
   try {
-    const isValid = await whatsAppController.whatsAppService.isSessionValid();
+    const isValid = await whatsAppController.isSessionValid();
     res.json({ valid: isValid });
   } catch (error) {
     res.status(500).json({ error: 'Failed to check session validity' });
@@ -26,7 +26,7 @@ router.get('/session-valid', authenticateToken, async (req, res) => {
 // Keep session alive
 router.post('/keep-alive', authenticateToken, async (req, res) => {
   try {
-    const success = await whatsAppController.whatsAppService.keepSessionAlive();
+    const success = await whatsAppController.keepSessionAlive();
     res.json({ success });
   } catch (error) {
     res.status(500).json({ error: 'Failed to keep session alive' });

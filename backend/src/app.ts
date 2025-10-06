@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import authRoutes from './routes/auth';
-import userRoutes from './routes/users';
+import userRoutes from './routes/userRoutes';
 import customerRoutes from './routes/customers';
 import uploadRoutes from './routes/upload';
 

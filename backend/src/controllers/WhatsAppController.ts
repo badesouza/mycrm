@@ -98,4 +98,13 @@ export class WhatsAppController {
       res.status(500).json({ error: 'Failed to disconnect' });
     }
   }
+
+  // Public methods to access WhatsAppService functionality
+  async isSessionValid() {
+    return await this.whatsAppService.isSessionValid();
+  }
+
+  async keepSessionAlive() {
+    return await this.whatsAppService.keepSessionAlive();
+  }
 } 
